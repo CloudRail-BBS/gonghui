@@ -382,6 +382,26 @@ app.post('/api/logout', (req, res) => {
   res.json({ ok: true });
 });
 
+app.post('/api/password/change', (req, res) => {
+  const user = currentUser(req);
+  if (!user) return res.status(401).json({ error: '请先登录' });
+  const oldPass = String(req.body.old || '');
+  const newPass = String(req.body.new || '');
+  if (!store.verifyPassword(oldPass, user)) return res.status(400).json({ error: '当前密码不正确' });
+  if (newPass.length < 6) return res.status(400).json({ error: '新密码至少 6 位' });
+  if (newPass === oldPass) return res.status(400).json({ error: '新密码不能和旧密码相同' });
+
+  store.setPassword(user, newPass);
+  const db = store.get();
+  const keep = tokenOf(req);
+  Object.keys(db.sessions).forEach(t => {
+    if (t !== keep && db.sessions[t].userId === user.id) delete db.sessions[t];
+  });
+  log(db, user.name, '修改密码', user.username);
+  store.save();
+  res.json({ ok: true });
+});
+
 app.get('/api/bootstrap', (req, res) => {
   const user = currentUser(req);
   res.json({ me: meOf(user), state: publicState(user) });
@@ -741,6 +761,29 @@ app.get('*', (req, res) => {
 
 store.load();
 
+/* ADMIN_RESET_PASS=1 时，用 ADMIN_PASS 覆盖现有管理员的密码（忘记密码时用） */
+(function resetAdminPass() {
+  const flag = String(process.env.ADMIN_RESET_PASS || '').toLowerCase();
+  if (flag !== '1' && flag !== 'true') return;
+  const db = store.get();
+  const adm = db.users.find(u => u.admin);
+  const pass = String(process.env.ADMIN_PASS || '');
+  if (!adm) {
+    console.error('[admin] 数据库里没有管理员账号，无法重置密码');
+    return;
+  }
+  if (pass.length < 6) {
+    console.error('[admin] ADMIN_RESET_PASS 已开启，但 ADMIN_PASS 为空或少于 6 位，已跳过');
+    return;
+  }
+  store.setPassword(adm, pass);
+  Object.keys(db.sessions).forEach(t => {
+    if (db.sessions[t].userId === adm.id) delete db.sessions[t];
+  });
+  store.saveNow();
+  console.log(`[admin] 已按环境变量重置管理员「${adm.username}」的密码，所有旧会话已失效`);
+})();
+
 if (HOST === 'localhost' || HOST === '127.0.0.1') {
   console.warn('[警告] HOST=' + HOST + ' 只监听回环地址，容器外（含 -p 映射）访问不到。容器部署请用 HOST=0.0.0.0');
 }
@@ -752,7 +795,14 @@ const server = app.listen(PORT, HOST, () => {
   console.log(`  监听地址：${ip}:${PORT}${ip === '0.0.0.0' ? '（所有网卡）' : ''}`);
   console.log(`  本机访问：http://localhost:${PORT}`);
   console.log(`  数据目录：${store.DATA_DIR}`);
-  console.log(`  默认管理员：${process.env.ADMIN_USER || 'admin'} / ${process.env.ADMIN_PASS || 'admin123'}（首次启动生成，请尽快修改密码）\n`);
+  const info = store.getSeedInfo();
+  if (info.createdAdmin) {
+    console.log(`  管理员：${info.adminUser} / ${process.env.ADMIN_PASS || 'admin123'}（本次新建，请登录后到右上角头像里改密码）`);
+  } else {
+    console.log(`  管理员：${info.adminUser}（沿用 data/db.json 中的账号）`);
+    console.log(`  ⚠ 已有数据库时 ADMIN_PASS 不会覆盖旧密码；忘记密码请加 ADMIN_RESET_PASS=1 重启`);
+  }
+  console.log('');
 });
 
 server.on('error', (e) => {

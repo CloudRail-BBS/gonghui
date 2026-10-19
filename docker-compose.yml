@@ -1,7 +1,7 @@
 services:
   fangbei:
     build: .
-    image: fangbei-guildhall:1.1.1
+    image: fangbei-guildhall:1.2.0
     container_name: fangbei
     restart: unless-stopped
     init: true

@@ -125,7 +125,28 @@ docker compose exec fangbei node -e "fetch('http://127.0.0.1:'+(process.env.PORT
 | `ADMIN_USER` | `admin` | 首次启动创建的管理员用户名 |
 | `ADMIN_PASS` | `admin123` | 首次启动创建的管理员密码 |
 
-> 管理员只在数据库为空时创建。已有数据后再改环境变量不会改密码。
+### 管理员账号与密码
+
+| 场景 | 做法 |
+|---|---|
+| 第一次启动 | `ADMIN_USER` / `ADMIN_PASS` 生效，账号写进 `data/db.json` |
+| 已经有数据库 | `ADMIN_PASS` **不再生效**，沿用库里的密码（启动日志会写明） |
+| 登录后改密码 | 右上角头像 → 修改密码（或「我的」页 → 修改密码） |
+| 忘记密码 | `.env` 里加 `ADMIN_RESET_PASS=1`，重启一次；密码变成 `ADMIN_PASS`，重置完把这行删掉 |
+| 彻底重来 | 停服务，删掉 `data/db.json`，再启动会重新生成账号和示例数据 |
+
+```bash
+# 忘记密码的例子
+# .env
+ADMIN_PASS='newpass2026'
+ADMIN_RESET_PASS=1
+
+docker compose up -d
+# 日志出现：[admin] 已按环境变量重置管理员「admin」的密码，所有旧会话已失效
+# 然后记得把 ADMIN_RESET_PASS 删掉或改成 0，再 up -d 一次
+```
+
+密码如果包含 `#`、`$`、空格，**一定要用单引号包起来**。`ADMIN_PASS=abc#123` 里 `#` 之后会被当成注释，实际密码只有 `abc`；`$` 则可能被当成变量展开。
 
 ## 目录结构
 

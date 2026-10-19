@@ -983,6 +983,7 @@ function renderHeader(){
           <button data-act="go" data-href="#/me">我的名片</button>
           <button data-act="search-open">全站搜索</button>
           <button data-act="login-open">${SERVER_MODE ? (s ? "切换账号" : "登录 / 注册") : "切换身份 / 登录"}</button>
+          ${s && SERVER_MODE ? `<button data-act="pass-open">修改密码</button>` : ""}
           ${s ? `<button data-act="logout">退出登录</button>` : ""}
         </div>` : ""}
       </div>
@@ -1714,6 +1715,7 @@ function MeView(){
           <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
             <button class="btn g sm" data-act="toast" data-msg="资料已保存">编辑资料</button>
             <button class="btn g sm" data-act="email-open">${ME.email ? "更换邮箱" : "绑定邮箱"}</button>
+            ${SERVER_MODE ? `<button class="btn g sm" data-act="pass-open">修改密码</button>` : ""}
             <button class="btn g sm" data-act="toast" data-msg="修改后请告知对手，避免核对失败">修改 MC ID</button>
           </div>
         </div>
@@ -2222,6 +2224,28 @@ function authModal(mode){
   setTimeout(() => { const i = $("#au-user"); if (i) i.focus(); }, 40);
 }
 
+function passModal(){
+  openModal(`<div class="modal" data-stop="1" style="max-width:420px">
+    <div class="modal-h"><b>修改密码</b><button class="x" data-act="close-modal">✕</button></div>
+    <div class="modal-b">
+      <p class="hint" style="margin:0 0 12px;line-height:1.7">改完密码后，其他设备上的登录会失效，当前这台保持登录。</p>
+      <div class="form">
+        <div class="field"><label>当前密码</label>
+          <input id="pw-old" type="password" autocomplete="current-password" placeholder="默认是 admin123，如果你还没改过"></div>
+        <div class="field"><label>新密码</label>
+          <input id="pw-new" type="password" autocomplete="new-password" placeholder="至少 6 位"></div>
+        <div class="field"><label>再输一次</label>
+          <input id="pw-new2" type="password" autocomplete="new-password" placeholder="确认新密码"></div>
+      </div>
+    </div>
+    <div class="modal-f">
+      <button class="btn p" data-act="pass-save">保存新密码</button>
+      <button class="btn g" data-act="close-modal">取消</button>
+    </div>
+  </div>`);
+  setTimeout(() => { const i = $("#pw-old"); if (i) i.focus(); }, 40);
+}
+
 function emailModal(){
   openModal(`<div class="modal" data-stop="1" style="max-width:420px">
     <div class="modal-h"><b>${ME.email ? "更换邮箱" : "绑定邮箱"}</b><button class="x" data-act="close-modal">✕</button></div>
@@ -2631,6 +2655,25 @@ document.addEventListener("click", (e) => {
       t.disabled = true;
       api(mode === "register" ? "/api/register" : "/api/login", { method: "POST", body: JSON.stringify(body) })
         .then(d => { applyServer(d); closeModal(); toast(mode === "register" ? "注册成功，欢迎加入" : "欢迎回来"); })
+        .catch(e => { toast(e.message); t.disabled = false; });
+      break;
+    }
+    case "pass-open": {
+      if (!SERVER_MODE) { toast("演示模式没有账号密码"); break; }
+      if (!state.session) { toast("请先登录"); break; }
+      state.menu = false; renderHeader(); passModal();
+      break;
+    }
+    case "pass-save": {
+      const o = $("#pw-old").value || "";
+      const n1 = $("#pw-new").value || "";
+      const n2 = $("#pw-new2").value || "";
+      if (!o) { toast("请填写当前密码"); break; }
+      if (n1.length < 6) { toast("新密码至少 6 位"); break; }
+      if (n1 !== n2) { toast("两次输入的新密码不一致"); break; }
+      t.disabled = true;
+      api("/api/password/change", { method: "POST", body: JSON.stringify({ old: o, new: n1 }) })
+        .then(() => { closeModal(); toast("密码已修改，下次请用新密码登录"); })
         .catch(e => { toast(e.message); t.disabled = false; });
       break;
     }

@@ -1,6 +1,6 @@
 {
   "name": "fangbei-guildhall",
-  "version": "1.1.1",
+  "version": "1.2.0",
   "private": true,
   "description": "方碑 · MC 公会中心：可自部署的公会平台（含 SMTP 发信与极验验证）",
   "main": "server.js",
