@@ -1,0 +1,17 @@
+{
+  "name": "fangbei-guildhall",
+  "version": "1.0.0",
+  "private": true,
+  "description": "方碑 · MC 公会中心：可自部署的公会平台",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

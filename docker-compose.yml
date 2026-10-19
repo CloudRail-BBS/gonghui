@@ -1,0 +1,13 @@
+services:
+  fangbei:
+    build: .
+    container_name: fangbei
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      ADMIN_USER: ${ADMIN_USER:-admin}
+      ADMIN_PASS: ${ADMIN_PASS:-admin123}
+      DATA_DIR: /app/data
+    volumes:
+      - ./data:/app/data

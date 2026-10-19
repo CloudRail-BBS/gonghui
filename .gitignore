@@ -1,0 +1,6 @@
+node_modules/
+data/
+_testdata/
+.env
+*.log
+_svgcheck.html

@@ -1,0 +1,2678 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>方碑 · MC 公会中心</title>
+<meta name="description" content="方碑是独立于服务器的 Minecraft 公会平台：登记公会、赛季积分榜、双方确认的战报、赛事对阵与荣誉墙。">
+<meta name="theme-color" content="#0A0C0F">
+<meta property="og:title" content="方碑 · MC 公会中心">
+<meta property="og:description" content="跨服务器公会榜，战绩由双方确认后计入。">
+<meta property="og:type" content="website">
+<link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+<link rel="apple-touch-icon" href="/assets/favicon.svg">
+<style>
+:root{
+  --bg:#0A0C0F; --s900:#0F1115; --s850:#14171C; --s800:#191D23; --s700:#232830;
+  --line:#232832; --soft:#1A1F26;
+  --tx:#E9EDF2; --tx2:#A9B3BF; --mut:#77828F;
+  --ac:#2DD4BF; --ac6:#0FA896; --ac4:#5EEAD4; --gd:#E8B44B;
+  --hero-bg:#0B0E12; --card1:#15181E; --card2:#12151A; --pod1:#13161B;
+  --hdr-bg:rgba(10,12,15,.86); --champ2:rgba(20,23,28,.9);
+  --on-accent:#B8FFF3; --ok-text:#8FE3D6; --gold-text:#F6E2B8;
+  --accent-soft:rgba(45,212,191,.1); --stripe:rgba(255,255,255,.016);
+  --sans:"HarmonyOS Sans SC",MiSans,"Source Han Sans SC","Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --disp:"Space Grotesk",var(--sans);
+  --mono:"JetBrains Mono","Cascadia Code",Consolas,"Courier New",monospace;
+  --r:10px; --max:1220px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+html[data-theme="light"]{
+  --bg:#F4F6F9; --s900:#FFFFFF; --s850:#FFFFFF; --s800:#EFF2F7; --s700:#E2E7EF;
+  --line:#DCE2EA; --soft:#E9EDF3;
+  --tx:#111820; --tx2:#3E4652; --mut:#69737F;
+  --ac:#0FA896; --ac6:#0B8B7D; --ac4:#0A7A6D; --gd:#A9781B;
+  --hero-bg:#EDF2F8; --card1:#FFFFFF; --card2:#FBFCFE; --pod1:#FFFFFF;
+  --hdr-bg:rgba(255,255,255,.9); --champ2:rgba(255,255,255,.92);
+  --on-accent:#0A5F57; --ok-text:#0A6B61; --gold-text:#7A5A16;
+  --accent-soft:rgba(15,168,150,.12); --stripe:rgba(0,0,0,.02);
+}
+html[data-theme="light"] body{
+  background-image:radial-gradient(900px 480px at 82% -6%,rgba(15,168,150,.10),transparent 62%),radial-gradient(600px 400px at 6% 2%,rgba(15,168,150,.05),transparent 60%);
+}
+html[data-theme="light"] .hero::before{opacity:.55}
+html[data-theme="light"] .overlay{background:rgba(18,24,30,.42)}
+html[data-theme="light"] .drawer-ov{background:rgba(18,24,30,.32)}
+html[data-theme="light"] .card,
+html[data-theme="light"] .pod,
+html[data-theme="light"] .ev{box-shadow:0 1px 2px rgba(17,24,32,.04)}
+html[data-theme="light"] .toast{background:#E6F4F1;border-color:rgba(15,168,150,.4);color:#0A5F57}
+html[data-theme="light"] .btn.p{box-shadow:0 6px 18px -12px rgba(15,168,150,.9)}
+html[data-theme="light"] .cover{border-color:#D7DEE7}
+html[data-theme="light"] .cover .pill{color:#D5E3E0;border-color:rgba(255,255,255,.2);background:rgba(255,255,255,.07)}
+html[data-theme="light"] .cover .pill.t{color:#B8FFF3;border-color:rgba(45,212,191,.4);background:rgba(45,212,191,.16)}
+html[data-theme="light"] .cover .pill.g{color:#F6DCA4;border-color:rgba(232,180,75,.32);background:rgba(232,180,75,.1)}
+html[data-theme="light"] .table.rt tbody tr:hover,
+html[data-theme="light"] table.rt tbody tr:hover{background:rgba(15,168,150,.06)}
+html[data-theme="light"] .mt,html[data-theme="light"] .hm{color:var(--tx2)}
+body{margin:0;min-height:100vh;display:flex;flex-direction:column;background:var(--bg);color:var(--tx);font-family:var(--sans);font-size:13.5px;line-height:1.65;-webkit-font-smoothing:antialiased;
+  background-image:radial-gradient(900px 480px at 82% -6%,rgba(45,212,191,.08),transparent 62%),radial-gradient(600px 400px at 6% 2%,rgba(45,212,191,.04),transparent 60%);background-repeat:no-repeat;background-attachment:fixed}
+::selection{background:rgba(45,212,191,.22);color:#CCFBF1}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.mut{color:var(--mut)}
+.wrap{max-width:var(--max);margin:0 auto;padding:0 24px}
+
+/* ---------- header ---------- */
+.hdr{position:sticky;top:0;z-index:60;background:var(--hdr-bg);backdrop-filter:blur(16px);border-bottom:1px solid var(--soft)}
+.hdr-in{max-width:var(--max);margin:0 auto;padding:0 24px;height:58px;display:flex;align-items:center;gap:20px}
+.brand{display:flex;align-items:center;gap:10px;flex:0 0 auto}
+.brand .mark{width:27px;height:27px;flex:0 0 auto;display:block;filter:drop-shadow(0 4px 12px rgba(118,150,213,.34))}
+.brand .mark svg{display:block;width:27px;height:27px}
+.brand:hover .mark{filter:drop-shadow(0 4px 16px rgba(118,150,213,.55))}
+.brand-t{display:flex;flex-direction:column;line-height:1.1}
+.brand-t b{font-size:14.5px;letter-spacing:.06em}
+.brand-t small{font:500 8.5px var(--mono);color:var(--mut);letter-spacing:.22em;margin-top:2px}
+.nav{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none;min-width:0;flex:0 1 auto}
+.nav::-webkit-scrollbar{display:none}
+.nav a{font-size:13px;color:var(--tx2);padding:7px 12px;border-radius:7px;white-space:nowrap;transition:.15s}
+.nav a:hover{color:var(--tx);background:var(--s850)}
+.nav a.on{color:var(--ac4);background:rgba(45,212,191,.1);font-weight:600}
+.hdr-r{margin-left:auto;display:flex;align-items:center;gap:6px;flex:0 0 auto}
+.ibtn{background:none;border:1px solid transparent;color:var(--tx2);padding:6px 9px;border-radius:7px;cursor:pointer;font-size:12.5px;display:inline-flex;align-items:center;gap:6px;transition:.15s}
+.ibtn:hover{background:var(--s850);color:var(--tx);border-color:var(--line)}
+.ibtn svg{opacity:.8}
+.dot-badge{min-width:15px;height:15px;border-radius:999px;background:var(--ac);color:#04211E;font:700 9.5px/15px var(--mono);text-align:center;padding:0 4px}
+.ava{width:28px;height:28px;border-radius:7px;background:linear-gradient(145deg,#2C3A44,#1B242C);border:1px solid #35414C;display:grid;place-items:center;font-size:12px;font-weight:700;color:#CFE9E5;cursor:pointer}
+.user-wrap{position:relative}
+.umenu{position:absolute;right:0;top:40px;width:200px;background:var(--s850);border:1px solid var(--line);border-radius:12px;padding:6px;box-shadow:0 24px 50px -20px #000;z-index:70}
+.umenu .uhead{padding:9px 10px 10px;border-bottom:1px solid var(--soft);margin-bottom:5px}
+.umenu .uhead b{display:block;font-size:13px}
+.umenu .uhead span{display:block;font:10px var(--mono);color:var(--mut);margin-top:2px}
+.umenu button{display:block;width:100%;text-align:left;background:none;border:0;color:var(--tx2);font-size:12.5px;padding:7px 10px;border-radius:6px;cursor:pointer}
+.umenu button:hover{background:var(--s800);color:var(--tx)}
+
+/* ---------- mobile tabbar ---------- */
+.tabbar{display:none}
+.tabbar a{position:relative;flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  padding:6px 2px 5px;border-radius:10px;color:var(--mut);font-size:10px;letter-spacing:.02em;transition:color .15s,background .15s}
+.tabbar a svg{display:block;width:19px;height:19px}
+.tabbar a span{line-height:1.1;white-space:nowrap}
+.tabbar a.on{color:var(--ac4);background:var(--accent-soft);font-weight:600}
+.tabbar a:active{transform:scale(.96)}
+.tabbar a.on::before{content:"";position:absolute;top:-1px;left:50%;transform:translateX(-50%);width:18px;height:2px;border-radius:2px;background:var(--ac4)}
+
+/* ---------- primitives ---------- */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;font-size:12.5px;font-weight:600;padding:8px 15px;border-radius:8px;border:1px solid transparent;cursor:pointer;transition:.16s;white-space:nowrap}
+.btn.p{background:rgba(45,212,191,.13);border-color:rgba(45,212,191,.44);color:var(--on-accent);box-shadow:0 0 24px -10px rgba(45,212,191,.7),inset 0 0 16px rgba(45,212,191,.05)}
+.btn.p:hover{background:rgba(45,212,191,.19);box-shadow:0 0 28px -8px rgba(45,212,191,.85)}
+.btn.g{background:var(--s800);border-color:var(--line);color:var(--tx2)}
+.btn.g:hover{border-color:#39414D;color:var(--tx)}
+.btn.gold{background:rgba(232,180,75,.1);border-color:rgba(232,180,75,.3);color:#F3D99C}
+.btn.gold:hover{background:rgba(232,180,75,.15)}
+.btn.danger{background:rgba(248,113,113,.08);border-color:rgba(248,113,113,.26);color:#FCA5A5}
+.btn.sm{padding:5px 11px;font-size:11.5px}
+.btn:disabled{opacity:.42;cursor:not-allowed}
+.pill{display:inline-flex;align-items:center;gap:5px;font:11px var(--mono);color:var(--tx2);border:1px solid var(--line);background:var(--s850);padding:3px 9px;border-radius:999px;white-space:nowrap}
+.pill.t{color:var(--on-accent);border-color:rgba(45,212,191,.33);background:var(--accent-soft)}
+.pill.g{color:#F6DCA4;border-color:rgba(232,180,75,.28);background:rgba(232,180,75,.07)}
+.pill.r{color:#FCA5A5;border-color:rgba(248,113,113,.25);background:rgba(248,113,113,.07)}
+.st{font:9.5px var(--mono);padding:1px 6px;border-radius:4px;border:1px solid;white-space:nowrap;display:inline-block;line-height:1.6}
+.st.ok{color:var(--ok-text);border-color:rgba(45,212,191,.28);background:rgba(45,212,191,.06)}
+.st.pd{color:#DCC79A;border-color:rgba(232,180,75,.28);background:rgba(232,180,75,.06)}
+.st.ds{color:#E8A3A3;border-color:rgba(248,113,113,.26);background:rgba(248,113,113,.06)}
+.card{background:linear-gradient(180deg,var(--card1),var(--card2));border:1px solid var(--line);border-radius:12px}
+.sec{margin:46px 0 0}
+.sec-h{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:16px}
+.sec-k{font:600 10px var(--mono);letter-spacing:.2em;color:var(--ac6);margin-bottom:5px}
+.sec-h h2{font-family:var(--disp);font-size:20px;font-weight:750;margin:0;letter-spacing:-.01em}
+.sec-h .more{font-size:12px;color:var(--mut)}
+.sec-h .more:hover{color:var(--ac4)}
+.divider{height:1px;background:var(--soft);margin:0}
+
+/* ---------- home hero ---------- */
+.hero{position:relative;overflow:hidden;background:var(--hero-bg)}
+.hero::before{content:"";position:absolute;inset:0;background:
+  radial-gradient(700px 340px at 20% 0%,rgba(45,212,191,.16),transparent 62%),
+  radial-gradient(600px 300px at 90% 20%,rgba(232,180,75,.07),transparent 60%)}
+.hero::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(125deg,transparent 0 80px,var(--stripe) 80px 82px)}
+.hero-in{position:relative;z-index:1;max-width:var(--max);margin:0 auto;padding:56px 24px 46px;display:grid;grid-template-columns:1fr 320px;gap:48px;align-items:center}
+.kicker{display:inline-flex;align-items:center;gap:8px;font:600 10px var(--mono);letter-spacing:.2em;color:var(--ac)}
+.kicker::before{content:"";width:22px;height:1px;background:var(--ac);opacity:.75}
+.dot-live{width:6px;height:6px;border-radius:50%;background:var(--ac);box-shadow:0 0 0 3px rgba(45,212,191,.16);animation:pulse 2s infinite;display:inline-block;flex:0 0 auto}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+.hero h1{font-family:var(--disp);font-size:clamp(30px,4.2vw,44px);line-height:1.18;font-weight:800;letter-spacing:-.02em;margin:18px 0 0}
+.hero h1 em{font-style:normal;color:var(--ac4);text-shadow:0 0 46px rgba(45,212,191,.4)}
+.hero .lead{color:var(--tx2);font-size:14.5px;max-width:520px;margin:16px 0 0}
+.hero-meta{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:20px;font:11.5px var(--mono);color:var(--mut)}
+.hero-meta b{color:var(--tx2);font-weight:500}
+.hero-cta{display:flex;gap:10px;margin-top:24px;flex-wrap:wrap}
+.champ{position:relative;border:1px solid rgba(232,180,75,.22);border-radius:14px;padding:20px;background:linear-gradient(160deg,rgba(232,180,75,.12),var(--champ2) 58%);box-shadow:0 0 60px -34px rgba(232,180,75,.9)}
+.champ-k{font:600 9.5px var(--mono);letter-spacing:.2em;color:var(--gd)}
+.champ-badge{width:44px;height:44px;border-radius:11px;background:var(--gd);color:#1A1205;display:grid;place-items:center;font-size:20px;font-weight:800;margin:14px 0 10px;box-shadow:0 0 30px -8px rgba(232,180,75,.9)}
+.champ-name{font-size:19px;font-weight:750}
+.champ-sub{font:10.5px var(--mono);color:var(--mut);margin-top:2px}
+.champ-stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px;padding-top:14px;border-top:1px solid rgba(232,180,75,.16)}
+.champ-stats b{display:block;font:600 15px var(--mono);color:var(--gold-text)}
+.champ-stats span{font-size:10px;color:#8E8471}
+
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:0;width:calc(100% - 48px);max-width:calc(var(--max) - 48px);margin:0 auto;border-top:1px solid var(--soft);border-bottom:1px solid var(--soft)}
+.stat{background:var(--bg);padding:18px 0 18px 24px;border-left:1px solid var(--soft)}
+.stat:first-child{border-left:0;padding-left:0}
+.stat b{display:block;font:700 22px var(--mono);letter-spacing:-.02em}
+.stat span{display:block;font-size:11px;color:var(--mut);margin-top:2px}
+
+/* ---------- podium ---------- */
+.podium{display:grid;grid-template-columns:1fr 1.12fr 1fr;gap:12px;align-items:end}
+.pod{position:relative;border:1px solid var(--line);border-radius:12px;padding:20px 18px;background:linear-gradient(180deg,var(--card1),var(--card2));transition:.18s}
+.pod:hover{border-color:rgba(45,212,191,.3);transform:translateY(-2px)}
+.pod.first{border-color:rgba(232,180,75,.32);background:linear-gradient(180deg,rgba(232,180,75,.1),var(--pod1) 62%);padding-top:26px;padding-bottom:26px;box-shadow:0 0 60px -40px rgba(232,180,75,.9)}
+.pod-rk{position:absolute;right:16px;top:14px;font:700 20px var(--mono);color:#4A545F;letter-spacing:-.03em}
+.pod.first .pod-rk{color:rgba(232,180,75,.7)}
+.pod-badge{width:38px;height:38px;border-radius:9px;display:grid;place-items:center;font-size:17px;font-weight:800;color:#07110F;margin-bottom:12px}
+.pod-name{font-size:16px;font-weight:700}
+.pod-meta{font:10px var(--mono);color:var(--mut);margin-top:2px}
+.pod-n{display:flex;align-items:baseline;gap:6px;margin-top:14px}
+.pod-n b{font:700 22px var(--mono);letter-spacing:-.02em}
+.pod-n span{font-size:10px;color:var(--mut)}
+
+/* ---------- feed ---------- */
+.feed{display:flex;flex-direction:column}
+.fi{display:flex;align-items:center;gap:12px;padding:11px 4px;border-bottom:1px solid var(--soft)}
+.fi:last-child{border-bottom:0}
+.fi-mark{width:3px;height:26px;border-radius:2px;background:var(--ac6);flex:0 0 auto;opacity:.8}
+.fi-mark.l{background:#7C3A3A}
+.fi-teams{flex:1;min-width:0;display:flex;align-items:center;gap:8px;font-size:13px}
+.fi-teams b{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fi-sc{font:600 13px var(--mono);padding:1px 7px;border-radius:5px;background:var(--accent-soft);color:var(--on-accent);flex:0 0 auto}
+.fi-meta{font:10.5px var(--mono);color:var(--mut);text-align:right;flex:0 0 auto}
+.fi-meta em{font-style:normal;display:block;color:#5C6774}
+
+/* ---------- rank ---------- */
+.page-h{padding:38px 0 22px}
+.page-h .sec-k{margin-bottom:8px}
+.page-h h1{font-family:var(--disp);font-size:30px;font-weight:800;margin:0;letter-spacing:-.02em}
+.page-h p{color:var(--mut);font-size:13px;margin:8px 0 0}
+.toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:22px 0 14px}
+.sel{background:var(--s850);border:1px solid var(--line);color:var(--tx2);border-radius:8px;padding:7px 10px;font-size:12.5px;font-family:inherit;cursor:pointer;outline:none}
+.sel:focus{border-color:rgba(45,212,191,.42)}
+.search{position:relative;flex:1;min-width:180px;max-width:280px}
+.search input{width:100%;background:var(--s850);border:1px solid var(--line);border-radius:8px;color:var(--tx);padding:8px 11px 8px 32px;font-size:12.5px;font-family:inherit;outline:none}
+.search input:focus{border-color:rgba(45,212,191,.42);box-shadow:0 0 0 3px rgba(45,212,191,.06)}
+.search input::placeholder{color:#5E6875}
+.search svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--mut)}
+.segs{display:flex;gap:2px;background:var(--s850);border:1px solid var(--line);border-radius:8px;padding:3px}
+.segs button{background:none;border:0;color:var(--mut);font-size:12px;padding:5px 11px;border-radius:6px;cursor:pointer;white-space:nowrap}
+.segs button.on{background:rgba(45,212,191,.12);color:var(--ac4);font-weight:600}
+
+.tblwrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--s900)}
+table.rt{width:100%;border-collapse:collapse;font-size:12.5px;min-width:720px}
+table.rt th{text-align:left;font:500 9.5px var(--mono);letter-spacing:.1em;color:var(--mut);padding:10px 10px;border-bottom:1px solid var(--line);text-transform:uppercase;background:rgba(255,255,255,.012);white-space:nowrap}
+table.rt th.num{text-align:right}
+table.rt th.c-lv{width:82px} table.rt th.c-pts{width:100px} table.rt th.c-wr{width:88px}
+table.rt th.c-mem{width:80px} table.rt th.c-form{width:94px} table.rt th.c-trend{width:72px}
+table.rt th.c-rk{width:46px}
+table.rt td{padding:11px 10px;border-bottom:1px solid var(--soft);color:var(--tx2);vertical-align:middle}
+table.rt tbody tr{transition:.13s;cursor:pointer}
+table.rt tbody tr:hover{background:rgba(45,212,191,.035)}
+table.rt tbody tr:last-child td{border-bottom:0}
+table.rt .num{font-family:var(--mono);font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+table.rt .rk{font:600 11px var(--mono);color:#4E5965;width:44px}
+table.rt tr.top1 .rk{color:var(--gd)}
+table.rt tr.top2 .rk{color:#A8B4C0}
+table.rt tr.top3 .rk{color:#B07A4A}
+table.rt .strong{color:var(--tx);font-weight:600}
+.gcell{display:flex;align-items:center;gap:10px;min-width:0}
+.gbadge{width:28px;height:28px;border-radius:7px;display:grid;place-items:center;font-family:var(--sans);font-size:12.5px;font-weight:800;line-height:1;color:#07110F;flex:0 0 auto;text-align:center;overflow:hidden}
+.gcell b{display:block;font-size:13px;font-weight:600;color:var(--tx);line-height:1.3}
+.gcell .gsub{display:block;font:9.5px var(--mono);color:var(--mut);margin-top:1px;white-space:nowrap}
+.dots{display:flex;gap:4px}
+.dots i{width:6px;height:6px;border-radius:50%;background:#2F3742;display:block}
+.dots i.w{background:var(--ac6)}
+.dots i.l{background:#8E4A4A}
+.trend{font:600 11px var(--mono);text-align:right}
+.trend.up{color:var(--ac4)}
+.trend.dn{color:#E08585}
+.trend.fl{color:#4E5965}
+.tfoot{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-top:1px solid var(--soft);font-size:11.5px;color:var(--mut)}
+.empty{padding:60px 20px;text-align:center;color:var(--mut)}
+.empty b{display:block;color:var(--tx2);font-size:14px;margin-bottom:4px}
+
+/* ---------- guild space ---------- */
+.cover{position:relative;border-radius:16px;overflow:hidden;margin-top:22px;border:1px solid #2A3038}
+.cover-bg{position:absolute;inset:0}
+.cover-bg::before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(125deg,transparent 0 62px,rgba(255,255,255,.022) 62px 64px)}
+.cover-bg::after{content:"";position:absolute;inset:0;background:linear-gradient(0deg,rgba(8,11,14,.72),transparent 78%)}
+.cover-in{position:relative;z-index:2;padding:18px 24px 22px}
+.crumb{font:11px var(--mono);color:#8FA3A0;display:flex;gap:7px;align-items:center}
+.crumb a:hover{color:var(--ac4)}
+.gs-head{display:flex;gap:16px;align-items:flex-start;margin-top:26px}
+.gs-badge{width:56px;height:56px;border-radius:13px;display:grid;place-items:center;font-size:26px;font-weight:800;color:#06110F;box-shadow:0 0 34px -10px rgba(255,255,255,.25)}
+.gs-head h1{font-family:var(--disp);font-size:27px;font-weight:800;margin:0;letter-spacing:-.01em}
+.gs-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:7px}
+.gs-meta{font:11px var(--mono);color:#96A8A5;margin-top:6px}
+.gs-actions{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+.gs-stats{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-top:22px;max-width:720px}
+.gs-stats b{display:block;font:700 19px var(--mono);letter-spacing:-.02em;color:#EDFBF8}
+.gs-stats span{display:block;font-size:10px;color:#8CA09C;margin-top:1px}
+.gtabs{display:flex;gap:2px;border-bottom:1px solid var(--line);margin-top:16px;overflow-x:auto;scrollbar-width:none}
+.gtabs::-webkit-scrollbar{display:none}
+.gtabs button{background:none;border:0;border-bottom:2px solid transparent;color:var(--mut);font-size:13px;padding:11px 14px;cursor:pointer;white-space:nowrap;margin-bottom:-1px}
+.gtabs button:hover{color:var(--tx2)}
+.gtabs button.on{color:var(--ac4);border-bottom-color:var(--ac);font-weight:600}
+.gtabs .cnt{font:10px var(--mono);color:#4E5965;margin-left:5px}
+.panes{padding-top:22px}
+.pane{display:grid;grid-template-columns:1.35fr 1fr;gap:16px}
+.pane.one{grid-template-columns:1fr}
+.box{padding:18px 20px}
+.box h3{font-size:13.5px;font-weight:700;margin:0 0 10px}
+.box p{color:var(--tx2);font-size:12.5px;margin:0}
+.kv{display:grid;grid-template-columns:76px 1fr;gap:8px 12px;font-size:12px}
+.kv dt{color:var(--mut)}
+.kv dd{margin:0;color:var(--tx2)}
+.honor{display:flex;gap:11px;padding:10px 0;border-bottom:1px solid var(--soft)}
+.honor:last-child{border-bottom:0}
+.honor i{width:3px;border-radius:2px;background:linear-gradient(180deg,var(--gd),rgba(232,180,75,.1));flex:0 0 auto}
+.honor.a i{background:linear-gradient(180deg,var(--ac),rgba(45,212,191,.1))}
+.honor.b i{background:linear-gradient(180deg,#5A6572,rgba(90,101,114,.1))}
+.honor b{display:block;font-size:12.5px;font-weight:600}
+.honor span{display:block;font:10px var(--mono);color:var(--mut);margin-top:2px}
+.honor em{font-style:normal;margin-left:auto;font:10px var(--mono);color:var(--gd);white-space:nowrap}
+.tier{display:inline-grid;place-items:center;width:17px;height:17px;border-radius:4px;font:700 9px var(--mono);margin-right:6px;vertical-align:1px}
+.tier.S{background:rgba(232,180,75,.16);color:var(--gd);border:1px solid rgba(232,180,75,.35)}
+.tier.A{background:rgba(45,212,191,.12);color:var(--ac4);border:1px solid rgba(45,212,191,.3)}
+.tier.B{background:rgba(255,255,255,.05);color:#98A3AF;border:1px solid #333A44}
+
+/* members */
+.mrow{display:flex;align-items:center;gap:11px;padding:9px 0;border-bottom:1px solid var(--soft)}
+.mrow:last-child{border-bottom:0}
+.mava{width:26px;height:26px;border-radius:6px;background:#1E242B;border:1px solid #2C333C;display:grid;place-items:center;font-size:11px;font-weight:700;color:#A9C4C0;flex:0 0 auto}
+.mname{font-size:12.5px;font-weight:500}
+.role{font-size:9.5px;font-family:var(--mono);padding:2px 6px;border-radius:4px;border:1px solid var(--line);color:var(--mut)}
+.role.owner{color:var(--gd);border-color:rgba(232,180,75,.3);background:rgba(232,180,75,.07)}
+.role.vice{color:var(--ac4);border-color:rgba(45,212,191,.28);background:rgba(45,212,191,.06)}
+.role.elite{color:#C9D3DF;border-color:#333B45}
+.online{width:5px;height:5px;border-radius:50%;background:var(--ac6);flex:0 0 auto;box-shadow:0 0 6px rgba(45,212,191,.8)}
+.offline{width:5px;height:5px;border-radius:50%;background:#39414B;flex:0 0 auto}
+
+/* ---------- events ---------- */
+.evgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(248px,1fr));gap:14px;margin-top:20px}
+.ev{display:block;padding:20px;border-radius:13px;border:1px solid var(--line);background:linear-gradient(180deg,var(--card1),var(--card2));transition:.18s;position:relative;overflow:hidden}
+.ev:hover{border-color:rgba(45,212,191,.32);transform:translateY(-2px);box-shadow:0 22px 50px -34px rgba(45,212,191,.7)}
+.ev-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.ev h3{font-size:15.5px;margin:0 0 4px;font-weight:700}
+.ev p{font-size:12px;color:var(--mut);margin:0}
+.ev-bar{height:4px;border-radius:2px;background:#22272F;margin:16px 0 8px;overflow:hidden}
+.ev-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--ac6),var(--ac));border-radius:2px}
+.ev-bar i.done{background:#3C444F}
+.ev-bar i.open{background:linear-gradient(90deg,#7A5C1F,var(--gd))}
+.ev-meta{font:10px var(--mono);color:var(--mut);display:flex;justify-content:space-between}
+
+.bracket{display:flex;gap:22px;overflow-x:auto;padding:0 2px 18px;align-items:flex-start}
+.bround{position:relative;padding-top:26px;min-width:206px;flex:0 0 auto}
+.bround-h{position:absolute;top:0;left:0;right:0;font:600 9.5px var(--mono);letter-spacing:.16em;color:var(--mut);display:flex;justify-content:space-between}
+.bround-h em{font-style:normal;color:#4E5965}
+.bround.mid .bm:first-child{margin-top:0}
+.bround.mid .bm:last-child{margin-top:0}
+.bround.last .bm{margin-top:0;margin-bottom:0}
+.bm{border:1px solid var(--line);border-radius:9px;background:var(--s850);overflow:hidden;transition:.15s;margin-bottom:14px}
+.bm:hover{border-color:#333B45}
+.bm.live{border-color:rgba(45,212,191,.42);box-shadow:0 0 26px -14px rgba(45,212,191,.9)}
+.bs{display:flex;align-items:center;justify-content:space-between;padding:7px 10px;font-size:12px;gap:8px}
+.bs+.bs{border-top:1px solid var(--soft)}
+.bs .bn{display:flex;align-items:center;gap:7px;min-width:0}
+.bs .bd{width:16px;height:16px;border-radius:4px;display:grid;place-items:center;font-size:8.5px;font-weight:800;color:#07110F;flex:0 0 auto}
+.bs .sc{font:600 11.5px var(--mono);color:var(--mut)}
+.bs.win .sc{color:var(--ac4)}
+.bs.win .bn{color:var(--tx);font-weight:600}
+.bs.lose{color:#6F7A87}
+.bm-note{font:9.5px var(--mono);color:#4E5965;padding:5px 10px;border-top:1px solid var(--soft);display:flex;justify-content:space-between}
+.bm-note.live{color:var(--ac6)}
+
+/* ---------- me ---------- */
+.mecard{display:flex;gap:18px;align-items:center;padding:22px 24px;margin-top:22px}
+.meava{width:62px;height:62px;border-radius:14px;background:linear-gradient(145deg,#27403C,#16211F);border:1px solid #33514B;display:grid;place-items:center;font-size:24px;font-weight:800;color:#9FE8DC}
+.mecard h1{font-size:22px;margin:0;font-weight:750}
+.mecard .mm{font:11px var(--mono);color:var(--mut);margin-top:4px;display:flex;gap:12px;flex-wrap:wrap}
+.mecard .mm b{color:var(--tx2);font-weight:500}
+.megrid{display:grid;grid-template-columns:1.1fr 1fr;gap:14px;margin-top:14px}
+.mlist{display:flex;flex-direction:column}
+.mitem{padding:12px 0;border-bottom:1px solid var(--soft);cursor:pointer}
+.mitem:last-child{border-bottom:0}
+.mitem:hover .mt{color:var(--tx)}
+.mitem .mt{font-size:12.5px;color:var(--tx2);display:flex;align-items:center;gap:7px}
+.mitem .ms{font:10px var(--mono);color:var(--mut);margin-top:3px}
+.unread{width:5px;height:5px;border-radius:50%;background:var(--ac);flex:0 0 auto}
+
+/* ---------- admin ---------- */
+.admin{display:grid;grid-template-columns:190px 1fr;gap:18px;margin-top:22px}
+.aside{display:flex;flex-direction:column;gap:3px}
+.aside button{display:flex;align-items:center;justify-content:space-between;background:none;border:1px solid transparent;color:var(--tx2);font-size:12.5px;padding:9px 12px;border-radius:8px;cursor:pointer;text-align:left}
+.aside button:hover{background:var(--s850)}
+.aside button.on{background:rgba(45,212,191,.09);border-color:rgba(45,212,191,.22);color:var(--ac4);font-weight:600}
+.aside .c{font:10px var(--mono);color:var(--mut);background:var(--s800);padding:1px 6px;border-radius:99px}
+.rev{padding:16px 18px;border-bottom:1px solid var(--soft)}
+.rev:last-child{border-bottom:0}
+.rev-h{display:flex;align-items:center;gap:10px}
+.rev-h b{font-size:13.5px}
+.rev-h .r{margin-left:auto;display:flex;gap:6px}
+.rev p{font-size:12px;color:var(--tx2);margin:8px 0 0}
+.rev .rmeta{font:10px var(--mono);color:var(--mut);margin-top:8px;display:flex;gap:14px;flex-wrap:wrap}
+.logs{width:100%;border-collapse:collapse;font-size:12px}
+.logs td{padding:9px 12px;border-bottom:1px solid var(--soft);color:var(--tx2)}
+.logs tr:last-child td{border-bottom:0}
+.logs .t{font-family:var(--mono);font-size:10.5px;color:var(--mut);white-space:nowrap}
+.form{display:grid;gap:12px;max-width:520px}
+.field label{display:block;font-size:11.5px;color:var(--mut);margin-bottom:5px}
+.field input,.field select,.field textarea{width:100%;background:var(--s850);border:1px solid var(--line);border-radius:8px;color:var(--tx);padding:8px 11px;font-size:12.5px;font-family:inherit;outline:none}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:rgba(45,212,191,.42)}
+.cgc{width:28px;height:28px;border-radius:8px;border:2px solid transparent;cursor:pointer;padding:0;transition:.15s}
+.cgc:hover{transform:translateY(-1px)}
+.cgc.on{border-color:#fff;box-shadow:0 0 0 2px rgba(255,255,255,.16)}
+.hint{font-size:11px;color:var(--mut)}
+
+/* ---------- modal / toast / drawer ---------- */
+.overlay{position:fixed;inset:0;background:rgba(4,6,8,.66);backdrop-filter:blur(4px);z-index:90;display:grid;place-items:center;padding:24px;animation:fade .18s ease}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.modal{width:100%;max-width:460px;background:var(--s850);border:1px solid #2B323C;border-radius:15px;box-shadow:0 40px 90px -30px #000;overflow:hidden;animation:pop .2s cubic-bezier(.2,.8,.3,1)}
+@keyframes pop{from{transform:translateY(8px) scale(.985);opacity:0}to{transform:none;opacity:1}}
+.modal-h{display:flex;align-items:center;justify-content:space-between;padding:15px 18px;border-bottom:1px solid var(--soft)}
+.modal-h b{font-size:14px}
+.modal-b{padding:18px}
+.modal-f{padding:13px 18px;border-top:1px solid var(--soft);display:flex;justify-content:flex-end;gap:8px;background:rgba(0,0,0,.14)}
+.x{background:none;border:0;color:var(--mut);cursor:pointer;font-size:16px;line-height:1;padding:4px}
+.x:hover{color:var(--tx)}
+.acct{display:flex;gap:11px;align-items:center;padding:11px 12px;border:1px solid var(--line);border-radius:10px;cursor:pointer;margin-bottom:8px;background:var(--s900)}
+.acct:hover{border-color:rgba(45,212,191,.4)}
+.acct .aa{width:32px;height:32px;border-radius:8px;background:#22303A;display:grid;place-items:center;font-weight:700;font-size:13px;color:#BFE6DF}
+.acct b{display:block;font-size:13px}
+.acct span{display:block;font:10px var(--mono);color:var(--mut);margin-top:1px}
+.mapgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.map{position:relative;border:1px solid var(--line);border-radius:9px;height:66px;display:flex;align-items:flex-end;padding:8px;cursor:pointer;overflow:hidden;transition:.15s;font-size:11.5px;font-weight:600}
+.map:hover{border-color:rgba(45,212,191,.45);transform:translateY(-1px)}
+.map .tint{position:absolute;inset:0;z-index:0}
+.map span{position:relative;z-index:1;text-shadow:0 1px 4px rgba(0,0,0,.6)}
+.map.banned{opacity:.42;cursor:not-allowed}
+.map.banned::after{content:"BAN";position:absolute;inset:0;display:grid;place-items:center;background:rgba(10,12,15,.62);color:#FCA5A5;font:700 10px var(--mono);letter-spacing:.16em;z-index:2}
+.map.picked{border-color:rgba(45,212,191,.6);box-shadow:0 0 0 1px rgba(45,212,191,.3),0 0 26px -12px rgba(45,212,191,.9)}
+.map.picked::after{content:"PICK";position:absolute;top:6px;right:7px;font:700 8.5px var(--mono);color:var(--ac4);letter-spacing:.1em;z-index:2}
+.bp-step{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+.bp-step span{font:10px var(--mono);padding:4px 8px;border-radius:6px;border:1px solid var(--line);color:var(--mut)}
+.bp-step span.on{border-color:rgba(45,212,191,.45);color:var(--ac4);background:rgba(45,212,191,.08)}
+.bp-step span.done{color:#5C6774;border-style:dashed}
+.toasts{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);z-index:120;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none}
+.toast{background:#1B2A27;border:1px solid rgba(45,212,191,.35);color:#D6F5EF;padding:9px 16px;border-radius:9px;font-size:12.5px;box-shadow:0 18px 40px -18px #000;animation:tin .22s ease}
+@keyframes tin{from{transform:translateY(8px);opacity:0}to{transform:none;opacity:1}}
+.drawer-ov{position:fixed;inset:0;background:rgba(4,6,8,.5);z-index:95;animation:fade .18s}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:380px;max-width:92vw;background:var(--s900);border-left:1px solid var(--line);z-index:96;display:flex;flex-direction:column;animation:slide .24s cubic-bezier(.2,.8,.3,1)}
+@keyframes slide{from{transform:translateX(24px);opacity:.6}to{transform:none;opacity:1}}
+.drawer-h{padding:16px 18px;border-bottom:1px solid var(--soft);display:flex;justify-content:space-between;align-items:center}
+.drawer-b{overflow:auto;padding:6px 18px 18px}
+.mail{padding:14px 0;border-bottom:1px solid var(--soft)}
+.mail b{font-size:13px;display:flex;gap:7px;align-items:center}
+.mail .from{font:10px var(--mono);color:var(--mut);margin-top:3px}
+.mail p{font-size:12px;color:var(--tx2);margin:6px 0 0}
+
+/* floating proto tag */
+.proto{position:fixed;left:14px;bottom:14px;z-index:50;font:10px var(--mono);color:#5C6774;border:1px solid var(--line);background:rgba(15,17,21,.86);padding:5px 9px;border-radius:6px;backdrop-filter:blur(8px)}
+.proto b{color:var(--ac6);font-weight:500}
+.ftr{border-top:1px solid var(--soft);padding:20px 0 26px;font-size:11.5px;color:var(--mut)}
+.ftr .wrap{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center}
+.ftr b{color:var(--tx2);font-weight:600;letter-spacing:.04em}
+.ftr .mono{font-size:10px;letter-spacing:.1em;color:#4E5965}
+.help{position:fixed;right:16px;bottom:16px;z-index:55;width:36px;height:36px;border-radius:50%;background:var(--s850);border:1px solid var(--line);color:var(--tx2);font:600 15px var(--mono);cursor:pointer;box-shadow:0 12px 30px -14px #000;transition:.15s}
+.help:hover{color:var(--ac4);border-color:rgba(45,212,191,.42);transform:translateY(-1px)}
+
+/* view animation */
+.view{animation:rise .28s ease both}
+@keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+@media(max-width:980px){
+  .hero-in{grid-template-columns:1fr;gap:26px}
+  .champ{max-width:360px}
+  .stats{grid-template-columns:repeat(2,1fr);width:calc(100% - 32px)}
+  .stat{padding:16px 0 16px 16px}
+  .stat:nth-child(odd){border-left:0;padding-left:0}
+  .podium{grid-template-columns:1fr}
+  .pod.first{order:-1}
+  .pane{grid-template-columns:1fr}
+  .megrid{grid-template-columns:1fr}
+  .admin{grid-template-columns:1fr}
+  .aside{flex-direction:row;overflow-x:auto;padding-bottom:4px}
+  .aside button{white-space:nowrap}
+  .gs-stats{grid-template-columns:repeat(3,1fr)}
+  .mapgrid{grid-template-columns:repeat(2,1fr)}
+  .evbody{grid-template-columns:1fr !important}
+}
+@media(max-width:760px){
+  .wrap,.hdr-in{padding:0 16px}
+  .hero-in{padding:36px 16px 32px}
+  .nav{display:none}
+  .tabbar{display:flex;gap:2px;position:fixed;left:0;right:0;bottom:0;z-index:80;
+    padding:6px 8px calc(6px + env(safe-area-inset-bottom,0px));
+    background:var(--hdr-bg);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+    border-top:1px solid var(--line);box-shadow:0 -10px 30px -22px #000}
+  body{padding-bottom:calc(64px + env(safe-area-inset-bottom,0px))}
+  .help{bottom:calc(76px + env(safe-area-inset-bottom,0px))}
+  .toasts{bottom:calc(80px + env(safe-area-inset-bottom,0px))}
+  .brand-t small{display:none}
+  .gs-head{flex-wrap:wrap}
+  .gs-actions{margin-left:0;width:100%}
+  .c-form,.c-trend{display:none}
+  .hdr-r .lbl{display:none}
+  .proto{display:none}
+}
+@media(max-width:640px){
+  .hdr-in{height:54px;flex-wrap:nowrap;padding:0 16px;gap:10px}
+  .brand-t b{font-size:14px}
+  .tabbar{padding-left:4px;padding-right:4px}
+}
+</style>
+</head>
+<body>
+<script>
+try{
+  var _t = localStorage.getItem("fb_theme");
+  if (_t !== "light" && _t !== "dark") {
+    _t = window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+  }
+  document.documentElement.setAttribute("data-theme", _t);
+}catch(e){}
+</script>
+<header class="hdr"><div class="hdr-in" id="hdr"></div></header>
+<main id="app" style="flex:1 0 auto"></main>
+<nav class="tabbar" id="tabbar" aria-label="主导航"></nav>
+<footer class="ftr"><div class="wrap">
+  <b>方碑 · MC 公会中心</b>
+  <span class="mono">V1.0</span>
+  <span>独立于任何服务器，战绩由双方确认后计入</span>
+</div></footer>
+<div id="modal"></div>
+<div id="drawer"></div>
+<div class="toasts" id="toasts"></div>
+<button class="help" data-act="help" title="使用说明">?</button>
+
+<script>
+(function(){
+"use strict";
+
+/* ============ DATA ============ */
+const SITE = {
+  brand: "方碑", brandSub: "GUILDHUB",
+  heroKicker: "SEASON 03 · 进行中",
+  heroTitleA: "群系争锋", heroTitleB: "第 3 赛季",
+  heroLead: "128 个公会、2,431 名玩家挤在同一张榜上。平台不连接任何服务器，战绩由双方确认后计入。赛季结束那天，冠军的名字会被刻在主城广场的石碑上。",
+  seasonStart: "2026-09-01", seasonEnd: "2026-11-30", seasonDays: 42,
+  format: "积分 + 单败淘汰", scoring: "双方确认",
+  championSlug: "beichen", championLabel: "卫冕冠军 · S2", championSub: "SEASON 02 CHAMPION",
+  stats: [
+    { v: "128", label: "收录公会" },
+    { v: "486", label: "本赛季场次" },
+    { v: "2,431", label: "注册玩家" },
+    { v: "96", label: "已颁荣誉" }
+  ],
+  allowRegister: true, allowCreateGuild: true
+};
+
+const SEASON = {id:"S3", name:"第 3 赛季 · 群系争锋", start:"2026-09-01", end:"2026-11-30", days:42};
+const MAPS = [
+  {id:"m1", name:"荒芜之地", c1:"#6B5A3A", c2:"#2A2418"},
+  {id:"m2", name:"樱花平原", c1:"#8A5A6E", c2:"#2B1D24"},
+  {id:"m3", name:"冰霜峡谷", c1:"#3E6F8E", c2:"#142430"},
+  {id:"m4", name:"熔岩洞窟", c1:"#B4552F", c2:"#2E1610"},
+  {id:"m5", name:"蘑菇森林", c1:"#5E8C4A", c2:"#1B2716"},
+  {id:"m6", name:"沉船海湾", c1:"#3F7E7A", c2:"#132523"},
+  {id:"m7", name:"天空群岛", c1:"#6E6A9B", c2:"#1E1D2C"}
+];
+
+const GUILDS = [
+  {slug:"beichen", name:"北辰", badge:"北", color:"#E8B44B", level:7, points:2388, wr:78.2, members:40, trend:2, recruit:false, server:"霜原服", founded:"2024-03-11", online:17,
+   tags:["老牌强队","卫冕冠军"], intro:"北辰成立于 2024 年春，专注生存与团队竞技。我们不追求人数，只追求每一场都能站在最后。训练日固定为每周三、周六晚八点，缺勤两次自动转为见习。"},
+  {slug:"shuangxu", name:"霜序", badge:"霜", color:"#2DD4BF", level:7, points:2164, wr:71.4, members:32, trend:1, recruit:true, server:"霜原服", founded:"2025-11-02", online:12,
+   tags:["活跃","建筑向"], intro:"霜序是一群喜欢在雪原上盖房子的玩家组成的公会。我们打竞技，但更在意主城那面墙是不是好看。每周日举办公会内部建筑赛，冠军作品留在公会展馆。"},
+  {slug:"redstone", name:"红石工坊", badge:"红", color:"#C9684A", level:6, points:1907, wr:64.9, members:28, trend:-1, recruit:true, server:"岚岛服", founded:"2024-08-19", online:9,
+   tags:["红石","自动化"], intro:"一群红石电路爱好者。公会仓库对成员完全开放，代价是你要留下你的电路图。"},
+  {slug:"endwalker", name:"末地行者", badge:"末", color:"#6B7A8F", level:6, points:1802, wr:61.1, members:24, trend:0, recruit:false, server:"橡木服", founded:"2024-05-06", online:7,
+   tags:["探险","末地"], intro:"专注末地与下界探索，拥有全服最完整的要塞坐标库。"},
+  {slug:"oakbay", name:"橡木湾", badge:"橡", color:"#8A6E4B", level:5, points:1655, wr:58.3, members:21, trend:3, recruit:true, server:"橡木服", founded:"2025-02-14", online:8,
+   tags:["休闲","建筑"], intro:"海边小镇风格的休闲公会，欢迎所有想慢慢玩的人。"},
+  {slug:"starglow", name:"星辉", badge:"星", color:"#7A5C8F", level:5, points:1540, wr:55.0, members:19, trend:-2, recruit:true, server:"星海服", founded:"2025-04-01", online:5,
+   tags:["新锐"], intro:"成立于第 2 赛季的新公会，进步很快，正在寻找稳定的 PVP 成员。"},
+  {slug:"forge", name:"熔炉", badge:"熔", color:"#B4552F", level:5, points:1482, wr:52.6, members:22, trend:0, recruit:false, server:"岚岛服", founded:"2024-11-23", online:6,
+   tags:["模组","工业"], intro:"岚岛服的工业公会，机械动力与格雷科技的老手聚集地。"},
+  {slug:"creeper", name:"苦力怕之家", badge:"苦", color:"#5E8C4A", level:4, points:1398, wr:50.0, members:18, trend:1, recruit:true, server:"橡木服", founded:"2025-06-08", online:4,
+   tags:["休闲"], intro:"名字很危险，人很温和。以农场和刷怪塔建设为主。"},
+  {slug:"deepguard", name:"深海守卫", badge:"深", color:"#3E6F8E", level:4, points:1310, wr:48.7, members:20, trend:-1, recruit:true, server:"星海服", founded:"2025-03-17", online:5,
+   tags:["空岛","防守"], intro:"星海服的空岛玩法公会，擅长以少打多。"},
+  {slug:"birch", name:"白桦林", badge:"桦", color:"#9AA5A0", level:4, points:1240, wr:46.2, members:16, trend:0, recruit:false, server:"橡木服", founded:"2025-01-30", online:3,
+   tags:["建筑"], intro:"安静的建造公会，主城由成员共同设计。"},
+  {slug:"dune", name:"沙丘商会", badge:"沙", color:"#B99A5B", level:3, points:1155, wr:44.4, members:14, trend:2, recruit:true, server:"岚岛服", founded:"2025-07-21", online:4,
+   tags:["交易","新会"], intro:"以玩家交易和补给为主营业务，欢迎商人加入。"},
+  {slug:"mush", name:"蘑菇岛", badge:"菇", color:"#A2547A", level:3, points:1080, wr:41.7, members:12, trend:-3, recruit:true, server:"星海服", founded:"2025-08-05", online:2,
+   tags:["新会"], intro:"刚成立三个月的小公会，什么位置都缺。"}
+];
+
+const ROLES = ["会长","副会长","副会长","精英","精英","精英","成员","成员","成员","成员","成员","成员","成员","见习","见习","成员","成员","成员"];
+const NAMES = ["白露","南山","迟野","一苇","木鱼","子夜","廿四","青禾","铁砧","灯灯","阿岚","拾贰","北辰星","洛水","半山","早川","乌鸦","柚子","秋分","不困","三十","灰烬","雾灯","长夏"];
+
+const HONORS = {
+  beichen:[
+    {y:"2026", t:"天翼杯 团队赛", tier:"S", r:"亚军", n:"决赛 1:2 负于霜序"},
+    {y:"2026", t:"第 2 赛季 群系争锋", tier:"S", r:"冠军", n:"积分 2,301 夺冠"},
+    {y:"2025", t:"十周年 团队赛", tier:"A", r:"四强", n:""}
+  ],
+  shuangxu:[
+    {y:"2026", t:"天翼杯 团队赛", tier:"S", r:"冠军", n:"决赛 2:1 击败北辰"},
+    {y:"2026", t:"星晦 Major 邀请赛", tier:"A", r:"四强", n:"八强淘汰红石工坊"},
+    {y:"2026", t:"第 2 赛季 群系争锋", tier:"A", r:"亚军", n:"积分 2,088"},
+    {y:"2025", t:"冬季邀请赛", tier:"S", r:"冠军", n:"全胜夺冠"},
+    {y:"2025", t:"十周年 团队赛", tier:"B", r:"八强", n:""}
+  ],
+  redstone:[
+    {y:"2026", t:"红石设计赛", tier:"S", r:"冠军", n:"作品「自动分类塔」"},
+    {y:"2026", t:"第 2 赛季 群系争锋", tier:"B", r:"八强", n:""}
+  ]
+};
+
+const TOURNAMENTS = [
+  {id:"s3", name:"群系争锋 · 八强淘汰赛", status:"live", format:"单败淘汰 · BO3", teams:8, done:4, prize:"¥3,000 + 主城雕像", next:"半决赛 10-24 20:00", cap:8, signed:8},
+  {id:"winter", name:"冬季邀请赛 2026", status:"open", format:"邀请制 · BO5", teams:6, done:0, prize:"¥5,000 + 专属称号", next:"报名截止 11-10", cap:8, signed:3},
+  {id:"guildcup", name:"公会自办赛 · 橡木湾杯", status:"open", format:"双败淘汰 · BO1", teams:12, done:0, prize:"点券 5,000 + 纪念徽章", next:"报名截止 11-02", cap:16, signed:9},
+  {id:"s2", name:"第 2 赛季 总决赛", status:"done", format:"单败淘汰 · BO3", teams:8, done:8, prize:"¥3,000", next:"已结束 · 冠军 北辰", cap:8, signed:8}
+];
+
+const BRACKET = [
+  {name:"八强", round:"ROUND 1", ms:[
+    {id:"r1m1", a:"北辰", b:"蘑菇岛", sa:2, sb:0, done:true},
+    {id:"r1m2", a:"霜序", b:"沙丘商会", sa:2, sb:1, done:true},
+    {id:"r1m3", a:"红石工坊", b:"白桦林", sa:2, sb:0, done:true},
+    {id:"r1m4", a:"末地行者", b:"深海守卫", sa:1, sb:2, done:true}
+  ]},
+  {name:"半决赛", round:"ROUND 2", ms:[
+    {id:"r2m1", a:"北辰", b:"深海守卫", sa:null, sb:null, done:false, time:"10-24 20:00"},
+    {id:"r2m2", a:"霜序", b:"红石工坊", sa:null, sb:null, done:false, time:"10-25 20:00"}
+  ]},
+  {name:"决赛", round:"FINAL", ms:[
+    {id:"r3m1", a:"待定", b:"待定", sa:null, sb:null, done:false, time:"10-31 20:00"}
+  ]}
+];
+
+let REVIEWS = [
+  {id:"r1", name:"铁砧兄弟会", badge:"砧", color:"#B4552F", by:"铁砧_阿木", server:"橡木服", time:"2 小时前", intro:"主打红石与自动化，现有 14 人，希望招收喜欢建造与机械的玩家。"},
+  {id:"r2", name:"暮色森林", badge:"暮", color:"#5E8C4A", by:"暮色_青禾", server:"霜原服", time:"5 小时前", intro:"以探险和地图制作为主，计划每周组织一次下界远征。"},
+  {id:"r3", name:"潮汐", badge:"潮", color:"#3E6F8E", by:"Tide_南山", server:"星海服", time:"昨天 21:40", intro:"空岛区新公会，8 人起步，主打空岛生存竞速。"}
+];
+
+let REPORTS = [
+  {id:"p1", title:"虚假比分", target:"红石工坊", by:"霜序 · 白露", match:"霜序 2:1 红石工坊", time:"3 小时前", detail:"对方提交的截图比分为 1:2，与比赛录像不符。", ev:"2 张截图"},
+  {id:"p2", title:"代打嫌疑", target:"星辉", by:"北辰 · 南山", match:"北辰 2:0 星辉", time:"昨天", detail:"同一账号在两场比赛中 IP 跨省切换。", ev:"后台日志"}
+];
+
+const LOGS = [
+  {t:"09:41", who:"阿岚", act:"通过建会申请", tg:"潮汐"},
+  {t:"09:12", who:"阿岚", act:"颁发荣誉", tg:"霜序 · 天翼杯冠军"},
+  {t:"昨天 22:03", who:"系统", act:"赛季积分结算", tg:"S3 · 第 12 周"},
+  {t:"昨天 20:41", who:"阿岚", act:"仲裁战报", tg:"霜序 2:1 红石工坊"},
+  {t:"10-17", who:"阿岚", act:"驳回建会申请", tg:"试炼之地"},
+  {t:"10-16", who:"系统", act:"不活跃衰减", tg:"12 个公会"}
+];
+
+const ME = {name:"林深", mc:"LinShen", uuid:"8f2c4d1e…a41d", role:"会长", guild:"shuangxu", contrib:128400, joined:"2025-11-02", matches:128, winrate:71.4};
+
+let MAILS = [
+  {from:"方碑 · 站务", title:"第 3 赛季规则更新说明", time:"1 小时前", unread:true, body:"本赛季起，战报需在比赛结束后 24 小时内提交，超时需由管理员手动补录。弃权一律记 0:2。"},
+  {from:"北辰 · 南山", title:"关于半决赛改期的申请", time:"昨天", unread:true, body:"我们有两名队员周六有考试，申请将 10-24 的半决赛调整到 10-25 同一时间，望同意。"},
+  {from:"系统", title:"你的公会通过了建会审核", time:"3 天前", unread:false, body:"「霜序」已完成建会审核，现在可以邀请成员并报名赛季赛。"}
+];
+
+const state = {
+  route:"/", session:{name:"林深", role:"owner"}, menu:false,
+  rankSort:"points", rankServer:"all", rankSeason:"S3", rankQ:"",
+  guildTab:"overview", adminTab:"review", season:"S3",
+  applied:false, bp:null, searchQ:"", myReports:[],
+  signups:{}, removed:[], openMail:null
+};
+
+/* ================= 服务端模式 =================
+   同一份前端既能当静态演示（localStorage），也能连 Node 服务端。
+   只要 /api/bootstrap 可用，就自动切到服务端模式。 */
+let SERVER_MODE = false;
+let ME_ID = null;
+const MATCHES = [];
+
+async function api(url, opt){
+  const r = await fetch(url, Object.assign({ headers: { "Content-Type": "application/json" } }, opt || {}));
+  let d = {};
+  try { d = await r.json(); } catch(e) {}
+  if (!r.ok) throw new Error(d.error || ("请求失败 " + r.status));
+  return d;
+}
+
+function hydrate(s){
+  if (!s) return;
+  if (s.guilds) { GUILDS.length = 0; s.guilds.forEach(g => GUILDS.push(g)); }
+  if (s.reviews) REVIEWS = s.reviews;
+  if (s.reports) REPORTS = s.reports;
+  if (s.matches) { MATCHES.length = 0; s.matches.forEach(m => MATCHES.push(m)); }
+  if (s.bracket) { BRACKET.length = 0; s.bracket.forEach(r => BRACKET.push(r)); }
+  if (s.tournaments) { TOURNAMENTS.length = 0; s.tournaments.forEach(t => TOURNAMENTS.push(t)); }
+  if (s.honors) { Object.keys(HONORS).forEach(k => delete HONORS[k]); Object.assign(HONORS, s.honors); }
+  if (s.mails) MAILS = s.mails;
+  if (s.signups) state.signups = s.signups;
+  if (s.logs) { LOGS.length = 0; s.logs.forEach(l => LOGS.push(l)); }
+  if (s.meta) {
+    state.season = state.rankSeason = s.meta.season || "S3";
+    if (s.meta.site) Object.assign(SITE, s.meta.site);
+  }
+}
+
+function applyServer(d, doRender){
+  hydrate(d.state);
+  const me = d.me;
+  ME_ID = me ? me.id : null;
+  if (me) {
+    state.session = { name: me.name, role: me.admin ? "admin" : "owner", guild: me.guildSlug, mc: me.mc };
+    const g = me.guildSlug ? bySlug(me.guildSlug) : null;
+    const entry = g && (g.roster || []).find(m => m.userId === me.id);
+    const confirmed = MATCHES.filter(m => m.status === "confirmed" && (m.aSlug === me.guildSlug || m.bSlug === me.guildSlug));
+    const wins = confirmed.filter(m => (m.aSlug === me.guildSlug ? m.sa > m.sb : m.sb > m.sa)).length;
+    Object.assign(ME, {
+      name: me.name, mc: me.mc || "—", guild: me.guildSlug,
+      contrib: entry ? entry.contrib : 0,
+      joined: entry ? entry.joined : (g ? g.founded : "—"),
+      matches: confirmed.length,
+      winrate: confirmed.length ? Math.round(wins / confirmed.length * 100) : 0
+    });
+    buildConfirms();
+  } else {
+    state.session = null;
+    CONFIRMS = [];
+  }
+  if (doRender !== false) render();
+}
+
+/* 服务端模式下，待我确认 = 对手提交、且我是另一方的战报；站长可代确认 */
+function buildConfirms(){
+  const mine = state.session && state.session.guild;
+  const admin = state.session && state.session.role === "admin";
+  CONFIRMS = MATCHES.filter(m => m.status === "pending" &&
+      ((mine && (m.aSlug === mine || m.bSlug === mine) && m.reporterId !== ME_ID) || admin)
+    ).map(m => {
+      const a = bySlug(m.aSlug), b = bySlug(m.bSlug);
+      return {
+        id: m.id,
+        mine: a ? a.name : "?",
+        other: b ? b.name : "?",
+        sa: m.sa, sb: m.sb, map: m.map, time: m.timeText,
+        by: (a ? a.name : "?") + " · 对手",
+        win: true
+      };
+    });
+}
+
+async function op(type, payload){
+  try {
+    const d = await api("/api/op", { method: "POST", body: JSON.stringify(Object.assign({ type }, payload || {})) });
+    applyServer(d);
+    return true;
+  } catch (e) {
+    toast(e.message || "操作失败");
+    return false;
+  }
+}
+
+/* ---------- 本地持久化（刷新不丢数据，方便多人测试） ---------- */
+const LS_KEY = "fangbei_guild_v2";
+function saveDB(){
+  if (SERVER_MODE) return;
+  try{
+    localStorage.setItem(LS_KEY, JSON.stringify({
+      guilds: GUILDS, reviews: REVIEWS, reports: REPORTS, confirms: CONFIRMS,
+      honors: HONORS, bracket: BRACKET, mails: MAILS, site: SITE,
+      my: state.myReports, signups: state.signups, session: state.session,
+      removed: state.removed
+    }));
+  }catch(e){}
+}
+function loadDB(){
+  try{
+    const raw = localStorage.getItem(LS_KEY);
+    if(!raw) return;
+    const d = JSON.parse(raw);
+    if(d.guilds && d.guilds.length){ GUILDS.length = 0; d.guilds.forEach(g => GUILDS.push(g)); }
+    if(d.reviews) REVIEWS = d.reviews;
+    if(d.reports) REPORTS = d.reports;
+    if(d.confirms) CONFIRMS = d.confirms;
+    if(d.mails) MAILS = d.mails;
+    if(d.my) state.myReports = d.my;
+    if(d.signups) state.signups = d.signups;
+    if(d.removed) state.removed = d.removed;
+    if(d.session !== undefined) state.session = d.session;
+    if(d.honors){ Object.keys(HONORS).forEach(k => delete HONORS[k]); Object.assign(HONORS, d.honors); }
+    if(d.bracket){ BRACKET.length = 0; d.bracket.forEach(r => BRACKET.push(r)); }
+    if(d.site) Object.assign(SITE, d.site);
+  }catch(e){}
+}
+function resetDB(){
+  try{ localStorage.removeItem(LS_KEY); }catch(e){}
+  location.hash = "#/";
+  location.reload();
+}
+
+const MATCH_ST = {
+  confirmed:{label:"已确认", cls:"ok"},
+  pending:{label:"待确认", cls:"pd"},
+  disputed:{label:"争议中", cls:"ds"}
+};
+
+/* 等待「我」确认的战报（对手已提交） */
+let CONFIRMS = [
+  {id:"c1", mine:"霜序", other:"红石工坊", sa:2, sb:1, map:"樱花平原", time:"2 小时前", by:"红石工坊 · 副会长", win:true},
+  {id:"c2", mine:"霜序", other:"星辉", sa:2, sb:0, map:"蘑菇森林", time:"昨天 21:10", by:"星辉 · 会长", win:true}
+];
+
+/* ============ UTILS ============ */
+const $ = (s, r) => (r||document).querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]));
+const hexA = (hex, a) => {
+  const n = parseInt(hex.slice(1), 16);
+  return "rgba(" + ((n>>16)&255) + "," + ((n>>8)&255) + "," + (n&255) + "," + a + ")";
+};
+const fmt = n => n.toLocaleString("en-US");
+const firstChar = s => { const a = Array.from(String(s || "").trim()); return a[0] || "?"; };
+const bySlug = s => GUILDS.find(g => g.slug === s);
+const sorted = () => GUILDS.slice().sort((a,b) => b.points - a.points);
+const rankOf = slug => sorted().findIndex(g => g.slug === slug) + 1;
+const seasonK = () => state.season === "S3" ? 1 : state.season === "S2" ? 0.93 : 0.88;
+const pts = g => Math.round(g.points * seasonK());
+const form = g => {
+  const out = [];
+  for (let i=0;i<5;i++) out.push(((i + g.level + g.name.length) % 3) !== 0 ? "w" : "l");
+  return out;
+};
+const memberCount = g => SERVER_MODE
+  ? ((g.roster || []).length || g.members || 0)
+  : Math.max(0, g.members - state.removed.filter(k => k.indexOf(g.slug + ":") === 0).length);
+const roster = g => {
+  if (SERVER_MODE) {
+    return (g.roster || []).map(m => ({
+      name: m.name, role: m.role, contrib: m.contrib || 0,
+      online: !!m.online, joined: m.joined || "—"
+    }));
+  }
+  const n = Math.min(g.members, 16);
+  return Array.from({length:n}, (_,i) => ({
+    name: i === 0 ? "林深" : NAMES[(i*5 + g.name.length) % NAMES.length],
+    role: i === 0 ? "会长" : ROLES[i] || "成员",
+    contrib: Math.round((g.members - i) * 1370 + (i*233)%900),
+    online: i < Math.max(2, Math.round(g.online/2)),
+    joined: ["2025-11-02","2025-12-18","2026-01-09","2026-02-14","2026-03-21","2026-04-07"][i%6]
+  })).filter(m => !state.removed.includes(g.slug + ":" + m.name));
+};
+const recentMatches = g => {
+  if (SERVER_MODE) {
+    return MATCHES.filter(m => m.aSlug === g.slug || m.bSlug === g.slug).map(m => {
+      const isA = m.aSlug === g.slug;
+      const opp = bySlug(isA ? m.bSlug : m.aSlug) || {name:"未知公会", badge:"?", color:"#39414B"};
+      const mine = isA ? m.sa : m.sb, theirs = isA ? m.sb : m.sa;
+      return {id:m.id, opp, sa:mine, sb:theirs, win:mine > theirs, st:m.status, map:m.map, time:m.timeText};
+    });
+  }
+  const others = GUILDS.filter(x => x.slug !== g.slug);
+  const maps = MAPS;
+  const times = ["2 小时前","5 小时前","昨天 21:40","10-17","10-15","10-14","10-12","10-11","10-09"];
+  return Array.from({length:9}, (_,i) => {
+    const o = others[(g.level*3 + i*5) % others.length];
+    const win = (i + g.level) % 3 !== 0;
+    const st = i === 1 || i === 7 ? "pending" : i === 4 ? "disputed" : "confirmed";
+    return {opp:o, sa: win?2:1, sb: win?(i%2):2, win, st,
+      map: maps[(i+g.level)%maps.length].name, time: times[i]};
+  });
+};
+const honorsOf = g => HONORS[g.slug] || [{y:"2026", t:"第 3 赛季 参赛", tier:"B", r:"参赛", n:""}];
+const bmap = name => {
+  const g = GUILDS.find(x => x.name === name);
+  return g ? {badge:g.badge, color:g.color} : {badge:"?", color:"#39414B"};
+};
+
+function toast(msg){
+  const box = $("#toasts");
+  const t = document.createElement("div");
+  t.className = "toast";
+  t.textContent = msg;
+  box.appendChild(t);
+  setTimeout(() => { t.style.transition = "opacity .25s"; t.style.opacity = "0"; }, 2000);
+  setTimeout(() => t.remove(), 2300);
+}
+
+/* ============ CHROME ============ */
+function navCls(p){
+  if (p === "/") return state.route === "/" ? "on" : "";
+  return state.route.startsWith(p) ? "on" : "";
+}
+const LOGO = '<svg viewBox="0 0 1792 1792" width="27" height="27" aria-hidden="true" focusable="false"><rect width="1792" height="1792" rx="336" fill="var(--bg)"/><path fill="#7696D5" d="M336 1h1120q139 0 237.5 98t98.5 237v1120q0 139-98.5 237.5T1456 1792H336q-139 0-237.5-98.5T0 1456V336Q0 197 98.5 99T336 1m339 545h584q31 0 53-21.5t22-52.5v-98q0-31-22-53t-53-22H502q-30 0-52 22t-22 53v1045q0 31 22 52.5t52 21.5h98q31 0 53-21.5t22-52.5v-399h476q31 0 52.5-22t21.5-53v-98q0-31-21.5-53t-52.5-22H675z"/></svg>';
+
+function navItems(){
+  const s = state.session;
+  const it = [
+    { href: "#/",       label: "首页",   icon: "home",   on: navCls("/") === "on" },
+    { href: "#/rank",   label: "公会榜", icon: "board",  on: navCls("/rank") === "on" },
+    { href: "#/events", label: "赛事",   icon: "cal",    on: navCls("/event") === "on" },
+    { href: "#/me",     label: "我的",   icon: "user",   on: navCls("/me") === "on" }
+  ];
+  if (s && s.role === "admin") {
+    it.push({ href: "#/admin", label: "管理", icon: "shield", on: navCls("/admin") === "on" });
+  }
+  return it;
+}
+
+function renderHeader(){
+  const s = state.session;
+  const items = navItems();
+  $("#hdr").innerHTML = `
+    <a class="brand" href="#/">
+      <span class="mark" aria-hidden="true">${LOGO}</span>
+      <span class="brand-t"><b>${SITE.brand}</b><small>${SITE.brandSub}</small></span>
+    </a>
+    <nav class="nav">
+      ${items.map(i => `<a href="${i.href}" class="${i.on ? "on" : ""}">${i.label}</a>`).join("")}
+    </nav>
+    <div class="hdr-r">
+      <button class="ibtn" data-act="theme" title="切换明暗">${ic(document.documentElement.getAttribute("data-theme") === "light" ? "moon" : "sun")}</button>
+      <button class="ibtn" data-act="search-open" title="搜索">${ic("search")}<span class="lbl">搜索</span></button>
+      <button class="ibtn" data-act="mail-open" title="站内信">${ic("mail")}<span class="lbl">站内信</span>
+        ${MAILS.filter(m=>m.unread).length ? `<i class="dot-badge">${MAILS.filter(m=>m.unread).length}</i>` : ""}
+      </button>
+      <div class="user-wrap">
+        <div class="ava" data-act="user-menu" title="${s ? s.name : "登录"}">${s ? s.name[0] : "?"}</div>
+        ${state.menu ? `
+        <div class="umenu">
+          <div class="uhead"><b>${s ? s.name : "未登录"}</b><span>${s ? (s.role === "admin" ? "站长 · 全站权限" : "霜序 · 会长") : "点击登录体验"}</span></div>
+          <button data-act="go" data-href="#/me">我的名片</button>
+          <button data-act="search-open">全站搜索</button>
+          <button data-act="login-open">${SERVER_MODE ? (s ? "切换账号" : "登录 / 注册") : "切换身份 / 登录"}</button>
+          ${s ? `<button data-act="logout">退出登录</button>` : ""}
+        </div>` : ""}
+      </div>
+    </div>`;
+
+  const tb = $("#tabbar");
+  if (tb) {
+    tb.innerHTML = items.map(i =>
+      `<a href="${i.href}" class="${i.on ? "on" : ""}"${i.on ? ' aria-current="page"' : ""}>${ic(i.icon, 19)}<span>${i.label}</span></a>`
+    ).join("");
+  }
+}
+
+function ic(n, size){
+  const p = {
+    search:'<circle cx="7.5" cy="7.5" r="4.8" stroke="currentColor" stroke-width="1.5" fill="none"/><path d="M11.2 11.2 14 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>',
+    mail:'<rect x="2.5" y="4" width="11" height="8" rx="1.5" stroke="currentColor" stroke-width="1.4" fill="none"/><path d="m3 5 5 4 5-4" stroke="currentColor" stroke-width="1.3" fill="none"/>',
+    arrow:'<path d="M3 8h9M8.5 4.5 12 8l-3.5 3.5" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>',
+    sun:"<circle cx='8' cy='8' r='3' stroke='currentColor' stroke-width='1.4' fill='none'/><path d='M8 1.6v1.5M8 12.9v1.5M1.6 8h1.5M12.9 8h1.5M3.5 3.5l1 1M11.5 11.5l1 1M12.5 3.5l-1 1M4.5 11.5l-1 1' stroke='currentColor' stroke-width='1.2' stroke-linecap='round'/>",
+    moon:"<path d='M13 9.6A5.2 5.2 0 0 1 6.4 3a5.4 5.4 0 1 0 6.6 6.6z' stroke='currentColor' stroke-width='1.4' fill='none' stroke-linejoin='round'/>",
+    home:'<path d="M2.7 7.3 8 2.7l5.3 4.6v6.1a.9.9 0 0 1-.9.9H3.6a.9.9 0 0 1-.9-.9z" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linejoin="round"/>',
+    board:'<path d="M3.3 13.2V9.4M8 13.2V3.2M12.7 13.2V6.6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>',
+    cal:'<rect x="2.6" y="3.7" width="10.8" height="9.5" rx="1.6" stroke="currentColor" stroke-width="1.4" fill="none"/><path d="M2.6 6.9h10.8M5.7 2.5v2.2M10.3 2.5v2.2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>',
+    user:'<circle cx="8" cy="5.9" r="2.5" stroke="currentColor" stroke-width="1.4" fill="none"/><path d="M3.1 13.3a4.9 4.9 0 0 1 9.8 0" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round"/>',
+    shield:'<path d="M8 2.2 12.7 4v4.1c0 2.6-1.9 4.5-4.7 5.7-2.8-1.2-4.7-3.1-4.7-5.7V4z" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linejoin="round"/>'
+  }[n] || "";
+  const sz = size || 14;
+  return `<svg width="${sz}" height="${sz}" viewBox="0 0 16 16" aria-hidden="true">${p}</svg>`;
+}
+
+/* ============ HOME ============ */
+function HomeView(){
+  const top = sorted();
+  const feed = [
+    {a:"霜序", b:"红石工坊", sa:2, sb:1, map:"樱花平原", t:"2 小时前", bo:3, st:"confirmed"},
+    {a:"北辰", b:"末地行者", sa:2, sb:0, map:"荒芜之地", t:"5 小时前", bo:3, st:"confirmed"},
+    {a:"深海守卫", b:"橡木湾", sa:1, sb:2, map:"冰霜峡谷", t:"昨天 21:40", bo:3, st:"pending"},
+    {a:"星辉", b:"沙丘商会", sa:2, sb:0, map:"蘑菇森林", t:"昨天 19:05", bo:3, st:"confirmed"},
+    {a:"苦力怕之家", b:"熔炉", sa:0, sb:2, map:"熔岩洞窟", t:"10-17", bo:3, st:"confirmed"},
+    {a:"白桦林", b:"蘑菇岛", sa:2, sb:1, map:"沉船海湾", t:"10-16", bo:3, st:"pending"}
+  ];
+  const pod = [top[1], top[0], top[2]];
+  const champ = bySlug(SITE.championSlug) || top[0];
+  return `<div class="view">
+  <section class="hero">
+    <div class="hero-in">
+      <div>
+        <div class="kicker"><span class="dot-live"></span> ${SITE.heroKicker}</div>
+        <h1>${SITE.heroTitleA}<em> · </em>${SITE.heroTitleB}</h1>
+        <p class="lead">${SITE.heroLead}</p>
+        <div class="hero-meta">
+          <span>赛季 <b>${SITE.seasonStart} → ${SITE.seasonEnd}</b></span>
+          <span>剩余 <b>${SITE.seasonDays} 天</b></span>
+          <span>赛制 <b>${SITE.format}</b></span>
+          <span>计分 <b>${SITE.scoring}</b></span>
+        </div>
+        <div class="hero-cta">
+          <a class="btn p" href="#/rank">查看公会榜 ${ic("arrow")}</a>
+          <a class="btn g" href="#/event/s3">报名赛季赛</a>
+        </div>
+      </div>
+      <a class="champ" href="#/g/${champ.slug}">
+        <div class="champ-k">${SITE.championLabel}</div>
+        <div class="champ-badge" style="background:${champ.color};color:#07110F">${champ.badge}</div>
+        <div class="champ-name">${champ.name}</div>
+        <div class="champ-sub">${SITE.championSub}</div>
+        <div class="champ-stats">
+          <div><b>${fmt(champ.points)}</b><span>赛季积分</span></div>
+          <div><b>${champ.wr}%</b><span>胜率</span></div>
+        </div>
+      </a>
+    </div>
+  </section>
+
+  <div class="stats">
+    ${(SITE.stats || []).map(x => `<div class="stat"><b>${x.v}</b><span>${x.label}</span></div>`).join("")}
+  </div>
+
+  <div class="wrap">
+    <section class="sec">
+      <div class="sec-h">
+        <div><div class="sec-k">LEADERBOARD</div><h2>本赛季领跑者</h2></div>
+        <a class="more" href="#/rank">完整榜单 →</a>
+      </div>
+      <div class="podium">
+        ${pod.map((g,i) => {
+          const rk = [2,1,3][i];
+          return `<a class="pod ${rk===1?"first":""}" href="#/g/${g.slug}">
+            <div class="pod-rk">0${rk}</div>
+            <div class="pod-badge" style="background:${g.color}">${g.badge}</div>
+            <div class="pod-name">${g.name}</div>
+            <div class="pod-meta">${g.server} · ${g.members} 人 · Lv.${g.level}</div>
+            <div class="pod-n"><b>${fmt(pts(g))}</b><span>积分</span><span style="margin-left:auto">${g.wr}% 胜率</span></div>
+          </a>`;
+        }).join("")}
+      </div>
+    </section>
+
+    <section class="sec" style="display:grid;grid-template-columns:1.35fr 1fr;gap:16px">
+      <div class="card box" style="padding:18px 20px 8px">
+        <div class="sec-h" style="margin-bottom:4px">
+          <div><div class="sec-k">LIVE FEED</div><h2 style="font-size:16px">最新战报</h2></div>
+          <a class="more" href="#/rank">全部</a>
+        </div>
+        <div class="feed">
+          ${feed.map(f => `<div class="fi">
+            <i class="fi-mark ${f.sa < f.sb ? "l" : ""}"></i>
+            <div class="fi-teams">
+              <b>${f.a}</b><span class="fi-sc">${f.sa} : ${f.sb}</span><b class="${f.sa < f.sb ? "mut" : ""}">${f.b}</b>
+            </div>
+            <div class="fi-meta" style="display:flex;flex-direction:column;align-items:flex-end;gap:3px">
+              <span class="st ${MATCH_ST[f.st].cls}">${MATCH_ST[f.st].label}</span>
+              <em>${f.map} · ${f.t}</em>
+            </div>
+          </div>`).join("")}
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <a class="card box" href="#/event/s3" style="display:block;border-color:rgba(45,212,191,.24);background:linear-gradient(160deg,var(--accent-soft),var(--card2) 55%)">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span class="pill t"><span class="dot-live"></span> 进行中</span>
+            <span class="mono" style="font-size:10px;color:var(--mut)">S3</span>
+          </div>
+          <h3 style="margin:12px 0 3px;font-size:15px">群系争锋 · 八强淘汰赛</h3>
+          <p style="font-size:11.5px;color:var(--mut)">8 支公会 · BO3 · 单败淘汰</p>
+          <div class="ev-bar"><i style="width:50%"></i></div>
+          <div class="ev-meta"><span>4 / 8 场完成</span><span>半决赛 10-24</span></div>
+        </a>
+        <div class="card box">
+          <div class="sec-k">NOTICE</div>
+          <div class="mlist" style="margin-top:6px">
+            <div class="mitem"><div class="mt">第 3 赛季规则更新：战报 24h 内提交</div><div class="ms">方碑 · 站务 · 1 小时前</div></div>
+            <div class="mitem"><div class="mt">冬季邀请赛报名开启，6 个名额</div><div class="ms">赛事组 · 昨天</div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="sec" style="padding-bottom:60px">
+      <div class="sec-h">
+        <div><div class="sec-k">TOP 8</div><h2>积分总榜</h2></div>
+        <div class="segs">
+          <button class="on">S3</button><button data-act="toast" data-msg="第 2 赛季数据已归档">S2</button>
+        </div>
+      </div>
+      ${rankTable(top.slice(0,8), true)}
+    </section>
+  </div>
+  </div>`;
+}
+
+/* ============ RANK ============ */
+function filteredGuilds(){
+  let list = sorted();
+  if (state.rankServer !== "all") list = list.filter(g => g.server === state.rankServer);
+  if (state.rankQ.trim()) {
+    const q = state.rankQ.trim().toLowerCase();
+    list = list.filter(g => g.name.toLowerCase().includes(q) || g.slug.includes(q));
+  }
+  if (state.rankSort === "win") list = list.slice().sort((a,b) => b.wr - a.wr);
+  if (state.rankSort === "members") list = list.slice().sort((a,b) => b.members - a.members);
+  if (state.rankSort === "level") list = list.slice().sort((a,b) => b.level - a.level || b.points - a.points);
+  return list;
+}
+
+function rankTable(list, simple){
+  if (!list.length) return `<div class="tblwrap"><div class="empty"><b>没有匹配的公会</b>换个关键词或服务器试试</div></div>`;
+  const rows = list.map((g) => {
+    const rk = rankOf(g.slug);
+    const top = rk <= 3 ? "top" + rk : "";
+    return `<tr class="${top}" data-act="go" data-href="#/g/${g.slug}">
+      <td class="rk">${String(rk).padStart(2,"0")}</td>
+      <td><div class="gcell">
+        <span class="gbadge" style="background:${g.color}">${g.badge}</span>
+        <div><b>${g.name}</b><span class="gsub">${g.server} · ${g.recruit ? "招募中" : "已满员"}</span></div>
+      </div></td>
+      ${simple ? "" : `<td class="num c-lv">Lv.${g.level}</td>`}
+      <td class="num strong">${fmt(pts(g))}</td>
+      <td class="num">${g.wr}%</td>
+      <td class="num">${memberCount(g)}</td>
+      ${simple ? "" : `<td class="c-form"><div class="dots">${form(g).map(f => `<i class="${f}"></i>`).join("")}</div></td>`}
+      ${simple ? "" : `<td class="num trend ${g.trend>0?"up":g.trend<0?"dn":"fl"} c-trend">${g.trend>0?"+"+g.trend:g.trend<0?g.trend:"—"}</td>`}
+    </tr>`;
+  }).join("");
+  return `<div class="tblwrap"><table class="rt">
+    <thead><tr>
+      <th class="c-rk"></th><th>公会</th>
+      ${simple?"":`<th class="num c-lv">等级</th>`}
+      <th class="num c-pts">积分</th><th class="num c-wr">胜率</th><th class="num c-mem">人数</th>
+      ${simple?"":`<th class="c-form">近 5 场</th><th class="num c-trend">趋势</th>`}
+    </tr></thead>
+    <tbody>${rows}</tbody>
+  </table>
+  ${simple ? "" : `<div class="tfoot"><span>显示 ${list.length} / 128 个公会</span><span class="mono">SEASON ${state.season}</span></div>`}
+  </div>`;
+}
+
+function RankView(){
+  return `<div class="view"><div class="wrap">
+    <div class="page-h" style="display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap">
+      <div>
+        <div class="sec-k">LEADERBOARD · ${state.season}</div>
+        <h1>公会榜</h1>
+        <p>跨服务器公会榜。积分由 Elo 变体计算，只有双方都确认的战报才会计入。</p>
+      </div>
+      ${SITE.allowCreateGuild === false ? "" : `<button class="btn p" data-act="create-guild">创建公会</button>`}
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:16px;margin:-6px 0 4px;font-size:11px;color:var(--mut)">
+      <span style="display:flex;align-items:center;gap:6px"><span class="st ok">已确认</span>计入积分</span>
+      <span style="display:flex;align-items:center;gap:6px"><span class="st pd">待确认</span>暂不计入，24h 后转争议</span>
+      <span style="display:flex;align-items:center;gap:6px"><span class="st ds">争议中</span>冻结待裁定</span>
+    </div>
+    <div class="toolbar">
+      <select class="sel" data-sel="rankSeason" aria-label="赛季">
+        <option value="S3" ${state.rankSeason==="S3"?"selected":""}>第 3 赛季 · 进行中</option>
+        <option value="S2" ${state.rankSeason==="S2"?"selected":""}>第 2 赛季 · 已结束</option>
+        <option value="S1" ${state.rankSeason==="S1"?"selected":""}>第 1 赛季 · 已结束</option>
+      </select>
+      <select class="sel" data-sel="rankServer" aria-label="服务器">
+        <option value="all">全部服务器</option>
+        ${["霜原服","岚岛服","橡木服","星海服"].map(s => `<option value="${s}" ${state.rankServer===s?"selected":""}>${s}</option>`).join("")}
+      </select>
+      <div class="search">
+        ${ic("search")}
+        <input data-q="rank" placeholder="搜索公会名…" value="${esc(state.rankQ)}">
+      </div>
+      <div class="segs" style="margin-left:auto">
+        <button data-act="sort" data-v="points" class="${state.rankSort==="points"?"on":""}">积分</button>
+        <button data-act="sort" data-v="win" class="${state.rankSort==="win"?"on":""}">胜率</button>
+        <button data-act="sort" data-v="members" class="${state.rankSort==="members"?"on":""}">人数</button>
+        <button data-act="sort" data-v="level" class="${state.rankSort==="level"?"on":""}">等级</button>
+      </div>
+    </div>
+    <div id="rank-host">${rankTable(filteredGuilds(), false)}</div>
+    <div style="height:60px"></div>
+  </div></div>`;
+}
+
+/* ============ GUILD ============ */
+function GuildView(slug){
+  const g = bySlug(slug);
+  if (!g) return `<div class="wrap"><div class="empty" style="padding:120px 0"><b>公会不存在</b>它可能已经解散了</div></div>`;
+  const rk = rankOf(g.slug);
+  const hs = honorsOf(g);
+  const ms = recentMatches(g);
+  const rs = roster(g);
+  const tab = state.guildTab;
+  const joined = state.session && g.slug === ME.guild;
+
+  const tabs = [
+    ["overview","概览",""],
+    ["members","成员",memberCount(g)],
+    ["honors","荣誉",hs.length],
+    ["matches","战报",24],
+    ["recruit","招募",""]
+  ];
+
+  return `<div class="view"><div class="wrap">
+    <div class="cover">
+      <div class="cover-bg" style="background:linear-gradient(118deg,#0C1419 0%,${hexA(g.color,.46)} 58%,#0B1418 100%)"></div>
+      <div class="cover-in">
+        <div class="crumb"><a href="#/rank">公会榜</a><span>/</span><span>${g.name}</span></div>
+        <div class="gs-head">
+          <div class="gs-badge" style="background:${g.color}">${g.badge}</div>
+          <div>
+            <h1>${g.name}</h1>
+            <div class="gs-tags">
+              <span class="pill g">S3 第 ${rk} 名</span>
+              ${g.tags.map(t => `<span class="pill">${t}</span>`).join("")}
+              <span class="pill ${g.recruit?"t":""}">${g.recruit?"招募中":"已满员"}</span>
+            </div>
+            <div class="gs-meta">${g.server} · ${memberCount(g)} 名成员 · 成立于 ${g.founded}</div>
+          </div>
+          <div class="gs-actions">
+            ${joined
+              ? `<button class="btn g" data-act="toast" data-msg="你已经在 ${g.name} 了">已加入</button>`
+              : `<button class="btn p" data-act="apply" data-g="${g.slug}">${state.applied?"已提交申请":"申请入会"}</button>`}
+            ${g.slug === ME.guild && state.session ? `<button class="btn g" data-act="edit-guild" data-g="${g.slug}">编辑资料</button>` : ""}
+            <button class="btn g" data-act="mail-open">联系会长</button>
+            <button class="btn g" data-act="report-guild" data-g="${g.slug}">举报</button>
+          </div>
+        </div>
+        <div class="gs-stats">
+          <div><b>${fmt(pts(g))}</b><span>赛季积分</span></div>
+          <div><b>${g.wr}%</b><span>胜率</span></div>
+          <div><b>Lv.${g.level}</b><span>公会等级</span></div>
+          <div><b>${hs.length}</b><span>荣誉</span></div>
+          <div><b>${g.online}</b><span>当前在线</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="gtabs">
+      ${tabs.map(([k,label,c]) => `<button data-act="gtab" data-v="${k}" class="${tab===k?"on":""}">${label}${c!==""?`<span class="cnt">${c}</span>`:""}</button>`).join("")}
+    </div>
+
+    <div class="panes">
+      ${tab === "overview" ? `
+      <div class="pane">
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div class="card box">
+            <h3>公会简介</h3>
+            <p>${g.intro}</p>
+            <div class="kv" style="margin-top:14px">
+              <dt>所在服务器</dt><dd>${g.server}</dd>
+              <dt>成立时间</dt><dd class="mono">${g.founded}</dd>
+              <dt>会长</dt><dd>林深</dd>
+              <dt>入会要求</dt><dd>${g.recruit ? "Lv.30 以上，每周至少参加一次活动" : "暂不开放招募"}</dd>
+            </div>
+          </div>
+          <div class="card box">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+              <h3 style="margin:0">近期战报</h3>
+              <button class="btn g sm" data-act="gtab" data-v="matches">全部 24 场</button>
+            </div>
+            ${ms.slice(0,4).map(m => `
+              <div class="fi" style="padding:10px 0">
+                <i class="fi-mark ${m.win?"":"l"}"></i>
+                <div class="fi-teams"><b>${g.name}</b><span class="fi-sc">${m.sa} : ${m.sb}</span><b class="${m.win?"mut":""}">${m.opp.name}</b></div>
+                <div class="fi-meta" style="display:flex;flex-direction:column;align-items:flex-end;gap:3px">
+                  <span class="st ${MATCH_ST[m.st].cls}">${MATCH_ST[m.st].label}</span>
+                  <em>${m.map} · ${m.time}</em>
+                </div>
+              </div>`).join("")}
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div class="card box">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <h3 style="margin:0">荣誉墙</h3>
+              <button class="btn g sm" data-act="gtab" data-v="honors">全部</button>
+            </div>
+            <div style="margin-top:4px">
+              ${hs.slice(0,4).map(h => `
+                <div class="honor ${h.tier==="A"?"a":h.tier==="B"?"b":""}">
+                  <i></i>
+                  <div style="flex:1">
+                    <b><span class="tier ${h.tier}">${h.tier}</span>${h.t}</b>
+                    <span>${h.y} · ${h.r}${h.n?" · "+h.n:""}</span>
+                  </div>
+                  <em>${h.r}</em>
+                </div>`).join("")}
+            </div>
+          </div>
+          <div class="card box" style="border-color:rgba(45,212,191,.2)">
+            <h3>招募公告</h3>
+            <p>${g.recruit ? "目前开放 3 个名额，优先考虑能参加周三、周六训练的玩家。" : "当前满员，可提交申请排队，有空位时优先联系。"}</p>
+            <button class="btn p sm" style="margin-top:12px" data-act="apply" data-g="${g.slug}">${state.applied?"已提交申请":"申请加入"}</button>
+          </div>
+        </div>
+      </div>` : ""}
+
+      ${tab === "members" ? `
+      <div class="pane one">
+        <div class="card box">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+            <h3 style="margin:0">成员 · ${memberCount(g)} 人</h3>
+            <span class="mono" style="font-size:10px;color:var(--mut)">${g.online} 人在线</span>
+          </div>
+          <table class="logs" style="width:100%">
+            <tbody>
+            ${rs.map(m => `<tr>
+              <td style="width:34px"><div class="mava">${m.name[0]}</div></td>
+              <td><span class="mname">${m.name}</span> ${m.role==="会长"?`<span class="role owner">会长</span>`:m.role==="副会长"?`<span class="role vice">副会长</span>`:m.role==="精英"?`<span class="role elite">精英</span>`:`<span class="role">成员</span>`}</td>
+              <td class="mono" style="text-align:right;color:var(--mut)">${fmt(m.contrib)}</td>
+              <td style="width:70px;text-align:right">${m.online?`<span class="online"></span> 在线`:`<span class="offline"></span> <span class="mut">离线</span>`}</td>
+              <td class="mono" style="width:100px;text-align:right;color:#5C6774;white-space:nowrap">${m.joined}</td>
+              ${g.slug === ME.guild && state.session ? `<td style="width:56px;text-align:right">${m.name !== ME.name ? `<button class="btn g sm" data-act="kick" data-g="${g.slug}" data-n="${m.name}" style="padding:2px 7px;font-size:10px">移出</button>` : ""}</td>` : ""}
+            </tr>`).join("")}
+            </tbody>
+          </table>
+          <div class="hint" style="margin-top:12px">仅展示前 ${rs.length} 位成员，按贡献排序。</div>
+        </div>
+      </div>` : ""}
+
+      ${tab === "honors" ? `
+      <div class="pane one">
+        <div class="card box">
+          <h3>荣誉墙 · ${hs.length} 项</h3>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px;margin-top:12px">
+            ${hs.map(h => `<div style="border:1px solid ${h.tier==="S"?"rgba(232,180,75,.26)":"var(--line)"};border-radius:10px;padding:14px;background:${h.tier==="S"?"rgba(232,180,75,.05)":"var(--s850)"}">
+              <div style="display:flex;align-items:center;gap:8px">
+                <span class="tier ${h.tier}">${h.tier}</span>
+                <b style="font-size:12.5px">${h.t}</b>
+              </div>
+              <div style="font-size:11.5px;color:var(--mut);margin-top:8px">${h.y} · ${h.r}</div>
+              ${h.n?`<div style="font-size:11px;color:#8C97A3;margin-top:4px">${h.n}</div>`:""}
+            </div>`).join("")}
+          </div>
+        </div>
+      </div>` : ""}
+
+      ${tab === "matches" ? `
+      <div class="pane one">
+        <div class="card box">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">
+            <div>
+              <h3 style="margin:0">战报</h3>
+              <div class="hint" style="margin-top:4px">最近 ${ms.length} 场 · ${ms.filter(m=>m.st==="confirmed").length} 已确认 · ${ms.filter(m=>m.st==="pending").length} 待确认 · ${ms.filter(m=>m.st==="disputed").length} 争议中</div>
+            </div>
+            ${g.slug === ME.guild ? `<button class="btn p sm" data-act="submit-match" data-g="${g.slug}">提交战报</button>` : ""}
+          </div>
+          ${g.slug === ME.guild && state.myReports.length ? `
+          <div style="margin-top:14px;padding:10px 12px;border:1px dashed rgba(232,180,75,.32);border-radius:8px;background:rgba(232,180,75,.04)">
+            <div style="font:10px var(--mono);color:var(--gd);letter-spacing:.1em;margin-bottom:4px">我刚提交 · 等待对方确认</div>
+            ${state.myReports.map(r => `<div style="display:flex;align-items:center;gap:8px;font-size:12px;padding:3px 0">
+              <span class="st pd">待确认</span>
+              <b style="color:var(--tx)">${g.name}</b>
+              <span class="mono" style="color:var(--tx2)">${r.sa} : ${r.sb}</span>
+              <span>${r.opp}</span>
+              <span class="mono" style="margin-left:auto;color:var(--mut);font-size:10px">${r.map}</span>
+            </div>`).join("")}
+          </div>` : ""}
+          <table class="logs" style="width:100%;margin-top:8px">
+            <tbody>
+            ${ms.map((m,i) => `<tr data-act="match-detail" data-i="${i}" style="cursor:pointer;${m.st==="confirmed"?"":"opacity:.7"}">
+              <td style="width:44px"><span class="pill ${m.win?"t":"r"}">${m.win?"W":"L"}</span></td>
+              <td><b style="color:var(--tx)">${g.name}</b> <span class="mono" style="color:var(--mut)">${m.sa} : ${m.sb}</span> <span>${m.opp.name}</span></td>
+              <td style="width:96px"><span class="st ${MATCH_ST[m.st].cls}">${MATCH_ST[m.st].label}</span></td>
+              <td class="mono" style="color:var(--mut);width:110px">${m.map}</td>
+              <td class="mono" style="color:#5C6774;width:96px;text-align:right">${m.time}</td>
+            </tr>`).join("")}
+            </tbody>
+          </table>
+          <div class="hint" style="margin-top:12px">只有双方都确认的战报计入积分。提交后对方有 24 小时确认，超时未确认自动转入争议，由站务裁定。</div>
+        </div>
+      </div>` : ""}
+
+      ${tab === "recruit" ? `
+      <div class="pane">
+        <div class="card box">
+          <h3>招募要求</h3>
+          <p>${g.recruit ? "我们正在寻找愿意长期一起玩的人，而不是只打一季的过客。" : "当前满员。你仍然可以提交申请，我们会在有空位时联系你。"}</p>
+          <div style="margin-top:14px;display:grid;gap:9px">
+            ${["Minecraft Java 版，版本跟随服务器","每周至少参加 1 次公会活动（周三 / 周六 20:00）","不要求技术，但要求不挂机、不内讧","入会后 14 天为见习期，通过后转正"].map((t,i) => `
+              <div style="display:flex;gap:9px;font-size:12px;color:var(--tx2)">
+                <span class="mono" style="color:var(--ac6);font-size:10px">0${i+1}</span><span>${t}</span>
+              </div>`).join("")}
+          </div>
+          <button class="btn p" style="margin-top:18px" data-act="apply" data-g="${g.slug}">${state.applied?"已提交申请":"提交入会申请"}</button>
+        </div>
+        <div class="card box">
+          <h3>招募进度</h3>
+          <div class="kv" style="margin-top:10px">
+            <dt>开放名额</dt><dd>3 人</dd>
+            <dt>待审申请</dt><dd>7 份</dd>
+            <dt>平均审核</dt><dd>1.2 天</dd>
+            <dt>见习期</dt><dd>14 天</dd>
+          </div>
+          <p style="margin-top:14px;font-size:11.5px;color:var(--mut)">申请会同时发送给会长与副会长，任一人处理即生效。</p>
+        </div>
+      </div>` : ""}
+    </div>
+    <div style="height:56px"></div>
+  </div></div>`;
+}
+
+/* ============ EVENTS ============ */
+function EventsView(){
+  return `<div class="view"><div class="wrap">
+    <div class="page-h">
+      <div class="sec-k">TOURNAMENTS</div>
+      <h1>赛事中心</h1>
+      <p>官方赛与公会自办赛都在这里。报名、对阵、BP、比分，一条线走完。</p>
+    </div>
+    <div class="evgrid">
+      ${TOURNAMENTS.map(t => {
+        const pct = t.status === "done" ? 100 : t.status === "open" ? Math.round(t.signed / t.cap * 100) : Math.round(t.done / t.cap * 100);
+        const cls = t.status === "live" ? "t" : t.status === "open" ? "g" : "";
+        const label = t.status === "live" ? "进行中" : t.status === "open" ? "报名中" : "已结束";
+        const prog = t.status === "open" ? `报名 ${t.signed} / ${t.cap}` : `${t.done} / ${t.cap} 场完成`;
+        return `<a class="ev" href="#/event/${t.id}">
+          <div class="ev-top"><span class="pill ${cls}">${t.status==="live"?'<span class="dot-live"></span>':""}${label}</span>
+          <span class="mono" style="font-size:10px;color:var(--mut)">${t.format}</span></div>
+          <h3>${t.name}</h3>
+          <p>${t.teams} 支公会 · ${t.prize}</p>
+          <div class="ev-bar"><i class="${t.status === "done" ? "done" : t.status === "open" ? "open" : ""}" style="width:${pct}%"></i></div>
+          <div class="ev-meta"><span>${prog}</span><span>${t.next}</span></div>
+        </a>`;
+      }).join("")}
+    </div>
+
+    <section class="sec">
+      <div class="sec-h">
+        <div><div class="sec-k">HALL OF FAME</div><h2>往届冠军</h2></div>
+        <span class="mono" style="font-size:10px;color:var(--mut)">2025 — 2026</span>
+      </div>
+      <div class="card" style="display:grid;grid-template-columns:repeat(3,1fr);overflow:hidden">
+        ${[
+          {y:"S2 · 2026 夏", g:"北辰", t:"群系争锋 第 2 赛季", s:"积分 2,301 · 决赛 3:1"},
+          {y:"S1 · 2026 春", g:"红石工坊", t:"群系争锋 第 1 赛季", s:"积分 1,884 · 决赛 3:2"},
+          {y:"杯赛 · 2026", g:"霜序", t:"天翼杯 团队赛", s:"决赛 2:1 击败北辰"}
+        ].map((c,i) => {
+          const g = GUILDS.find(x => x.name === c.g);
+          return `<div style="padding:20px;${i? "border-left:1px solid var(--soft);":""}">
+            <div class="mono" style="font-size:9.5px;letter-spacing:.16em;color:var(--gd)">${c.y}</div>
+            <div style="display:flex;align-items:center;gap:10px;margin-top:10px">
+              <span class="gbadge" style="background:${g.color};width:26px;height:26px;font-size:11px;border-radius:6px">${g.badge}</span>
+              <b style="font-size:14px">${c.g}</b>
+            </div>
+            <div style="font-size:11.5px;color:var(--tx2);margin-top:8px">${c.t}</div>
+            <div class="mono" style="font-size:10px;color:var(--mut);margin-top:3px">${c.s}</div>
+          </div>`;
+        }).join("")}
+      </div>
+    </section>
+
+    <section class="sec" style="display:grid;grid-template-columns:1.2fr 1fr;gap:16px;padding-bottom:60px">
+      <div class="card box">
+        <h3>怎么参赛</h3>
+        <div style="display:flex;gap:0;margin-top:14px">
+          ${[["01","报名","会长在赛事页提交名单，5–8 人"],["02","抽签","开赛前 48h 直播抽签"],["03","BP","开赛前 30 分钟完成 BP"],["04","出结果","比分确认后自动进榜"]].map((s,i) => `
+            <div style="flex:1;padding-right:${i<3?12:0}px;border-right:${i<3?"1px solid var(--soft)":"0"};margin-right:${i<3?12:0}px">
+              <div class="mono" style="font-size:9.5px;color:var(--ac6);letter-spacing:.1em">${s[0]}</div>
+              <div style="font-size:12.5px;font-weight:600;margin-top:4px">${s[1]}</div>
+              <div style="font-size:11px;color:var(--mut);margin-top:3px;line-height:1.5">${s[2]}</div>
+            </div>`).join("")}
+        </div>
+      </div>
+      <div class="card box">
+        <h3>赛事规则</h3>
+        <div style="display:grid;gap:7px;margin-top:10px">
+          ${["战报须在赛后 24 小时内提交，超时需人工补录","弃权一律记 0:2，连续两次弃权取消赛季资格","代打、虚假比分核实后扣分并禁赛 7 天","BP 阶段掉线可申请重开一次"].map(t => `
+            <div style="display:flex;gap:8px;font-size:11.5px;color:var(--tx2)">
+              <span style="color:var(--ac6)">·</span><span>${t}</span>
+            </div>`).join("")}
+        </div>
+      </div>
+    </section>
+  </div></div>`;
+}
+
+function EventView(id){
+  const t = TOURNAMENTS.find(x => x.id === id) || TOURNAMENTS[0];
+  return `<div class="view"><div class="wrap">
+    <div class="page-h" style="display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap">
+      <div>
+        <div class="sec-k">${t.status==="done"?"FINISHED":"ONGOING"} · ${t.format}</div>
+        <h1>${t.name}</h1>
+        <p>${t.teams} 支公会 · 奖金 ${t.prize} · ${t.next}</p>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn g" data-act="toast" data-msg="对阵图导出开发中">导出对阵图</button>
+        ${t.status === "open" ? (state.signups[t.id] ? `<button class="btn g" disabled>已报名 · ${state.signups[t.id]}</button>` : `<button class="btn p" data-act="signup" data-t="${t.id}">报名参赛</button>`) : ""}
+        ${t.status==="done" ? `<button class="btn g" disabled>已结束</button>` : `<button class="btn p" data-act="bp-open">进入 BP</button>`}
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 268px;gap:16px" class="evbody">
+      <div class="card" style="padding:16px 18px 8px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <h3 style="margin:0;font-size:13.5px">淘汰赛对阵</h3>
+          <span class="mono" style="font-size:10px;color:var(--mut)">BO3 · 单败</span>
+        </div>
+        <div class="bracket"${t.id==="s3"?"":' style="display:none"'}>
+          ${BRACKET.map((r,ri) => `
+            <div class="bround ${ri===1?"mid":ri===2?"last":""}">
+              <div class="bround-h"><span>${r.name}</span><em>${r.round}</em></div>
+              ${r.ms.map(m => {
+                const A = bmap(m.a), B = bmap(m.b);
+                const live = !m.done && m.a !== "待定";
+                const aw = m.done && m.sa > m.sb, bw = m.done && m.sb > m.sa;
+                return `<div class="bm ${live?"live":""}">
+                  <div class="bs ${aw?"win":m.done?"lose":""}">
+                    <span class="bn"><i class="bd" style="background:${A.color}">${A.badge}</i>${m.a}</span>
+                    <span class="sc">${m.sa ?? "—"}</span>
+                  </div>
+                  <div class="bs ${bw?"win":m.done?"lose":""}">
+                    <span class="bn"><i class="bd" style="background:${B.color}">${B.badge}</i>${m.b}</span>
+                    <span class="sc">${m.sb ?? "—"}</span>
+                  </div>
+                  <div class="bm-note ${live?"live":""}"><span>${m.done?"已结束":(m.time||"待定")}</span><span>${m.done?"BO3":(live?"待进行":"—")}</span></div>
+                </div>`;
+              }).join("")}
+            </div>`).join("")}
+        </div>
+        ${t.id==="s3" ? "" : `<div class="empty" style="padding:64px 20px"><b>对阵尚未生成</b>报名截止后统一抽签，结果会同步通知各队会长</div>`}
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div class="card box">
+          <h3>赛事信息</h3>
+          <div class="kv" style="margin-top:8px">
+            <dt>赛制</dt><dd>${t.format}</dd>
+            <dt>奖金</dt><dd>${t.prize}</dd>
+            <dt>队伍</dt><dd>${t.teams + (state.signups[t.id] ? 1 : 0)} / ${t.cap}</dd>
+            <dt>报名</dt><dd>${t.status === "open" ? (state.signups[t.id] ? "已报名" : "开放中") : "已截止"}</dd>
+          </div>
+        </div>
+        <div class="card box">
+          <h3>图池 · 7 张</h3>
+          <div style="display:grid;gap:5px;margin-top:8px">
+            ${MAPS.map(m => `<div style="display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--tx2)">
+              <i style="width:18px;height:18px;border-radius:4px;background:linear-gradient(140deg,${m.c1},${m.c2});display:block;flex:0 0 auto"></i>${m.name}
+            </div>`).join("")}
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style="height:60px"></div>
+  </div></div>`;
+}
+
+/* ============ ME ============ */
+function MeView(){
+  const s = state.session;
+  if (!s) return `<div class="view"><div class="wrap"><div class="empty" style="padding:140px 0">
+    <b>登录后查看你的名片</b>
+    <p style="margin:10px 0 18px">平台不连接服务器，填写 MC ID 就能和对手互相核对。</p>
+    <button class="btn p" data-act="login-open">登录 / 完善资料</button>
+  </div></div></div>`;
+  const g = bySlug(ME.guild);
+  const isAdmin = s.role === "admin";
+  if (isAdmin) return `<div class="view"><div class="wrap">
+    <div class="card mecard">
+      <div class="meava" style="background:linear-gradient(145deg,#3B2E18,#221A0E);border-color:#5A4720;color:#E8C87A">岚</div>
+      <div style="flex:1">
+        <h1>阿岚</h1>
+        <div class="mm">
+          <span>身份 <b>站长</b></span>
+          <span>权限 <b>全站</b></span>
+          <span>加入 <b>2024-02-11</b></span>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn g" data-act="login-open">切换身份</button>
+        <a class="btn p" href="#/admin">进入后台</a>
+      </div>
+    </div>
+    <div class="megrid">
+      <div class="card box">
+        <h3>待处理</h3>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px">
+          <div><div class="mono" style="font-size:20px;font-weight:600">${REVIEWS.length}</div><div style="font-size:10px;color:var(--mut)">建会审核</div></div>
+          <div><div class="mono" style="font-size:20px;font-weight:600">${REPORTS.length}</div><div style="font-size:10px;color:var(--mut)">争议仲裁</div></div>
+          <div><div class="mono" style="font-size:20px;font-weight:600">12</div><div style="font-size:10px;color:var(--mut)">今日操作</div></div>
+        </div>
+        <a class="btn p sm" href="#/admin" style="margin-top:18px">进入管理后台</a>
+      </div>
+      <div class="card box">
+        <h3>站内信</h3>
+        <div class="mlist" style="margin-top:6px">
+          ${MAILS.slice(0,3).map(m => `<div class="mitem" data-act="mail-open">
+            <div class="mt">${m.unread?'<i class="unread"></i>':""}${m.title}</div>
+            <div class="ms">${m.from} · ${m.time}</div>
+          </div>`).join("")}
+        </div>
+      </div>
+    </div>
+    <div style="height:60px"></div>
+  </div></div>`;
+  if (!g) return `<div class="view"><div class="wrap">
+    <div class="card mecard">
+      <div class="meava">${s.name[0]}</div>
+      <div style="flex:1">
+        <h1>${s.name}</h1>
+        <div class="mm">
+          <span>MC ID <b>${ME.mc || "未填写"}</b></span>
+          <span>身份 <b>${isAdmin ? "站长" : "玩家"}</b></span>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px"><button class="btn g" data-act="login-open">切换账号</button></div>
+    </div>
+    <div class="card box" style="margin-top:14px;padding:40px 20px;text-align:center">
+      <b style="font-size:15px">你还没有加入公会</b>
+      <p class="hint" style="margin:8px 0 18px">去公会榜挑一个，或者自己创建一个。</p>
+      <div style="display:flex;gap:8px;justify-content:center">
+        <a class="btn p" href="#/rank">去公会榜</a>
+        ${SITE.allowCreateGuild === false ? "" : `<button class="btn g" data-act="create-guild">创建公会</button>`}
+      </div>
+    </div>
+    <div class="card box" style="margin-top:14px">
+      <h3>站内信</h3>
+      <div class="mlist" style="margin-top:6px">
+        ${MAILS.length ? MAILS.slice(0, 5).map(m => `<div class="mitem" data-act="mail-open">
+          <div class="mt">${m.unread ? '<i class="unread"></i>' : ""}${m.title}</div>
+          <div class="ms">${m.from} · ${m.time}</div>
+        </div>`).join("") : `<p class="hint" style="margin:8px 0 0">还没有消息。</p>`}
+      </div>
+    </div>
+    <div style="height:60px"></div>
+  </div></div>`;
+
+  return `<div class="view"><div class="wrap">
+    <div class="card mecard">
+      <div class="meava">${s.name[0]}</div>
+      <div style="flex:1">
+        <h1>${s.name}</h1>
+        <div class="mm">
+          <span>MC ID <b>${ME.mc}</b></span>
+          <span>平台 ID <b>#SH-0142</b></span>
+          <span>身份 <b>${isAdmin?"站长":"霜序 · 会长"}</b></span>
+          <span>加入 <b>${ME.joined}</b></span>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn g" data-act="login-open">切换身份</button>
+        ${isAdmin ? `<a class="btn p" href="#/admin">进入后台</a>` : `<a class="btn p" href="#/g/${ME.guild}">我的公会</a>`}
+      </div>
+    </div>
+
+    <div class="megrid">
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div class="card box">
+          <h3>我的公会</h3>
+          <a href="#/g/${g.slug}" style="display:flex;gap:12px;align-items:center;margin-top:10px">
+            <div class="gbadge" style="width:38px;height:38px;font-size:16px;border-radius:9px;background:${g.color}">${g.badge}</div>
+            <div style="flex:1">
+              <b style="font-size:14px">${g.name}</b>
+              <div class="mono" style="font-size:10px;color:var(--mut);margin-top:2px">${g.server} · Lv.${g.level} · 第 ${rankOf(g.slug)} 名</div>
+            </div>
+            <span class="pill t">会长</span>
+          </a>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:16px;padding-top:14px;border-top:1px solid var(--soft)">
+            <div><div class="mono" style="font-size:16px;font-weight:600">${fmt(ME.contrib)}</div><div style="font-size:10px;color:var(--mut)">累计贡献</div></div>
+            <div><div class="mono" style="font-size:16px;font-weight:600">${ME.matches || 0}</div><div style="font-size:10px;color:var(--mut)">参战场次</div></div>
+            <div><div class="mono" style="font-size:16px;font-weight:600">${ME.winrate || 0}%</div><div style="font-size:10px;color:var(--mut)">个人胜率</div></div>
+          </div>
+        </div>
+        <div class="card box">
+          <h3>账号信息</h3>
+          <div class="kv" style="margin-top:8px">
+            <dt>MC ID</dt><dd class="mono">${ME.mc}</dd>
+            <dt>平台 ID</dt><dd class="mono">#SH-0142</dd>
+            <dt>注册时间</dt><dd class="mono">2025-11-02</dd>
+          </div>
+          <p class="hint" style="margin-top:12px;line-height:1.6">平台不连接任何游戏服务器。MC ID 由玩家自行填写，仅用于对手核对身份。</p>
+          <div style="display:flex;gap:8px;margin-top:12px">
+            <button class="btn g sm" data-act="toast" data-msg="资料已保存">编辑资料</button>
+            <button class="btn g sm" data-act="toast" data-msg="修改后请告知对手，避免核对失败">修改 MC ID</button>
+          </div>
+        </div>
+        <div class="card box">
+          <h3>我的近期战绩</h3>
+          <div style="margin-top:6px">
+            ${[["霜序","红石工坊","2 : 1","W"],["霜序","北辰","1 : 2","L"],["霜序","橡木湾","2 : 0","W"]].map(r => `
+              <div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--soft);font-size:12px">
+                <span class="pill ${r[3]==="W"?"t":"r"}">${r[3]}</span>
+                <span style="color:var(--tx2)">${r[0]}</span>
+                <span class="mono" style="color:var(--tx)">${r[2]}</span>
+                <span style="color:var(--mut)">${r[1]}</span>
+                <span class="mono" style="margin-left:auto;color:#5C6774;font-size:10px">BO3</span>
+              </div>`).join("")}
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div class="card box" style="border-color:rgba(232,180,75,.26)">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <h3 style="margin:0">待我确认</h3>
+            <span class="pill g">${CONFIRMS.length} 场</span>
+          </div>
+          ${CONFIRMS.length ? CONFIRMS.map(c => `
+            <div style="padding:11px 0;border-bottom:1px solid var(--soft)">
+              <div style="display:flex;align-items:center;gap:8px;font-size:12px">
+                <b style="color:var(--tx)">${c.mine}</b>
+                <span class="mono" style="color:var(--tx);font-weight:600">${c.sa} : ${c.sb}</span>
+                <b>${c.other}</b>
+                <span class="mono" style="margin-left:auto;font-size:10px;color:var(--mut)">${c.time}</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;margin-top:7px">
+                <span class="hint" style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.by} · ${c.map}</span>
+                <button class="btn g sm" data-act="reject-match" data-id="${c.id}">有异议</button>
+                <button class="btn p sm" data-act="confirm-match" data-id="${c.id}">确认</button>
+              </div>
+            </div>`).join("") : `<p class="hint" style="margin-top:10px;line-height:1.6">没有待确认的战报。对手提交后，这里会出现确认请求。</p>`}
+        </div>
+        <div class="card box">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <h3 style="margin:0">站内信</h3>
+            <button class="btn g sm" data-act="mail-open">全部</button>
+          </div>
+          <div class="mlist" style="margin-top:6px">
+            ${MAILS.slice(0,3).map(m => `<div class="mitem" data-act="mail-open">
+              <div class="mt">${m.unread?'<i class="unread"></i>':""}${m.title}</div>
+              <div class="ms">${m.from} · ${m.time}</div>
+            </div>`).join("")}
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style="height:60px"></div>
+  </div></div>`;
+}
+
+/* ============ ADMIN ============ */
+function AdminView(){
+  if (!state.session || state.session.role !== "admin") {
+    return `<div class="view"><div class="wrap"><div class="empty" style="padding:140px 0">
+      <b>需要管理员权限</b><p style="margin:10px 0 18px">用「站长 · 阿岚」身份登录后可以进入后台。</p>
+      <button class="btn p" data-act="login-open">切换身份</button>
+    </div></div></div>`;
+  }
+  const tab = state.adminTab;
+  const tabs = [["review","建会审核",REVIEWS.length],["bracket","赛事编排",""],["honor","荣誉颁发",""],["report","争议仲裁",REPORTS.length],["settings","站点设置",""],["log","审计日志",""]];
+  return `<div class="view"><div class="wrap">
+    <div class="page-h">
+      <div class="sec-k">ADMIN CONSOLE</div>
+      <h1>管理后台</h1>
+      <p>建会、赛事、荣誉、仲裁。所有动作都会写入审计日志。</p>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px">
+      <div class="card" style="padding:14px 16px">
+        <div class="mono" style="font-size:20px;font-weight:600">${REVIEWS.length}</div>
+        <div style="font-size:11px;color:var(--mut)">待审核建会</div>
+      </div>
+      <div class="card" style="padding:14px 16px">
+        <div class="mono" style="font-size:20px;font-weight:600">${REPORTS.length}</div>
+        <div style="font-size:11px;color:var(--mut)">待处理举报</div>
+      </div>
+      <div class="card" style="padding:14px 16px">
+        <div class="mono" style="font-size:20px;font-weight:600">12</div>
+        <div style="font-size:11px;color:var(--mut)">今日操作</div>
+      </div>
+    </div>
+    <div class="admin">
+      <div class="aside">
+        ${tabs.map(([k,l,c]) => `<button data-act="atab" data-v="${k}" class="${tab===k?"on":""}">
+          <span>${l}</span>${c!==""?`<span class="c">${c}</span>`:""}
+        </button>`).join("")}
+      </div>
+      <div>
+        ${tab === "review" ? `
+          <div class="card">
+            <div style="padding:14px 18px;border-bottom:1px solid var(--soft);display:flex;justify-content:space-between;align-items:center">
+              <b style="font-size:13.5px">待审核建会申请</b>
+              <span class="mono" style="font-size:10px;color:var(--mut)">SLA 48h</span>
+            </div>
+            ${REVIEWS.length ? REVIEWS.map(r => `
+              <div class="rev">
+                <div class="rev-h">
+                  <span class="gbadge" style="background:${r.color};width:26px;height:26px;font-size:11px;border-radius:6px">${r.badge}</span>
+                  <b>${r.name}</b>
+                  <span class="pill">${r.server}</span>
+                  <div class="r">
+                    <button class="btn g sm" data-act="rev-reject" data-id="${r.id}">驳回</button>
+                    <button class="btn p sm" data-act="rev-approve" data-id="${r.id}">通过</button>
+                  </div>
+                </div>
+                <p>${r.intro}</p>
+                <div class="rmeta"><span>申请人 ${r.by}</span><span>${r.time}</span><span>初始等级 Lv.1</span></div>
+              </div>`).join("") : `<div class="empty"><b>没有待审核的申请</b>全部都处理完了</div>`}
+          </div>` : ""}
+
+        ${tab === "bracket" ? `
+          <div class="card box">
+            <h3>赛程编排 · 群系争锋 S3</h3>
+            <div class="form" style="margin-top:12px">
+              <div class="field"><label>赛制</label>
+                <select><option>单败淘汰</option><option>双败淘汰</option><option>小组赛 + 淘汰</option><option>瑞士轮</option></select></div>
+              <div class="field"><label>每轮 BO</label>
+                <select><option>BO3</option><option>BO5</option><option>BO1</option></select></div>
+              <div class="field"><label>图池</label>
+                <select><option>标准 7 图（荒芜之地 / 樱花平原 / …）</option><option>竞技 5 图</option><option>自定义</option></select></div>
+              <div style="display:flex;gap:8px;margin-top:4px">
+                <button class="btn p" data-act="toast" data-msg="已重新抽签并生成对阵">重新抽签</button>
+                <button class="btn g" data-act="toast" data-msg="赛程已发布，已通知 8 支公会">发布赛程</button>
+              </div>
+            </div>
+            <div class="hint" style="margin-top:14px">抽签会保留已完成的比分，只重排未开始的对阵。</div>
+            <div style="margin-top:18px;border-top:1px solid var(--soft);padding-top:16px">
+              <h4 style="margin:0 0 4px">录入比分</h4>
+              ${BRACKET.slice(1).reduce((acc,r) => acc.concat(r.ms), []).filter(m => !m.done && m.a !== "待定" && m.b !== "待定").map(m => `
+                <div style="display:flex;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid var(--soft)">
+                  <span style="flex:1;font-size:12.5px">${m.a} <span class="mut" style="font-size:11px">vs</span> ${m.b}</span>
+                  <input class="sel" id="sc-${m.id}-a" type="number" min="0" max="3" value="0" style="width:54px;text-align:center;padding:5px">
+                  <span class="mono mut">:</span>
+                  <input class="sel" id="sc-${m.id}-b" type="number" min="0" max="3" value="0" style="width:54px;text-align:center;padding:5px">
+                  <button class="btn p sm" data-act="save-score" data-id="${m.id}">保存</button>
+                </div>`).join("") || `<div class="hint">所有场次都已结束。</div>`}
+              <div class="hint" style="margin-top:8px">保存后半决赛胜者自动进入决赛，赛事页与对阵图同步更新。</div>
+            </div>
+          </div>` : ""}
+
+        ${tab === "honor" ? `
+          <div class="card box">
+            <h3>颁发荣誉</h3>
+            <div class="form" style="margin-top:12px">
+              <div class="field"><label>公会</label>
+                <select id="h-guild">${GUILDS.slice(0,8).map(g => `<option value="${g.slug}">${g.name}</option>`).join("")}</select></div>
+              <div class="field"><label>荣誉名称</label>
+                <input id="h-title" placeholder="例如：天翼杯 团队赛" value="群系争锋 · 八强淘汰赛"></div>
+              <div class="field"><label>名次 / 说明</label>
+                <input id="h-rank" placeholder="例如：冠军" value="冠军"></div>
+              <div class="field"><label>等级</label>
+                <select id="h-tier"><option value="S">S · 冠军 / 顶级赛事</option><option value="A">A · 四强 / 主要赛事</option><option value="B">B · 参与 / 社区赛事</option></select></div>
+              <div><button class="btn gold" data-act="honor-award">颁发并通知</button></div>
+            </div>
+            <div class="hint" style="margin-top:14px">颁发后会立即出现在公会荣誉墙，并给会长发送站内信。</div>
+          </div>` : ""}
+
+        ${tab === "report" ? `
+          <div class="card">
+            <div style="padding:14px 18px;border-bottom:1px solid var(--soft)"><b style="font-size:13.5px">举报与争议</b></div>
+            ${REPORTS.length ? REPORTS.map(r => `
+              <div class="rev">
+                <div class="rev-h">
+                  <span class="pill r">${r.title}</span>
+                  <b>${r.target}</b>
+                  <div class="r">
+                    <button class="btn g sm" data-act="rep-dismiss" data-id="${r.id}">驳回举报</button>
+                    <button class="btn p sm" data-act="rep-uphold" data-id="${r.id}">判举报成立</button>
+                  </div>
+                </div>
+                <p>${r.detail}</p>
+                <div class="rmeta"><span>举报人 ${r.by}</span><span>涉及 ${r.match}</span><span>证据 ${r.ev}</span><span>${r.time}</span></div>
+              </div>`).join("") : `<div class="empty"><b>没有待处理举报</b>社区很和平</div>`}
+          </div>` : ""}
+
+        ${tab === "settings" ? `
+          <div class="card box">
+            <h3>站点设置</h3>
+            <p class="hint">首页文案、赛季信息、数据条、冠军卡都在这里改，保存后立即生效。</p>
+            <div class="form" style="margin-top:14px;max-width:700px">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                <div class="field"><label>站点名</label><input id="st-brand" maxlength="12" value="${esc(SITE.brand)}"></div>
+                <div class="field"><label>英文副标</label><input id="st-brandsub" maxlength="16" value="${esc(SITE.brandSub)}"></div>
+              </div>
+              <div class="field"><label>首页角标</label><input id="st-kicker" maxlength="40" value="${esc(SITE.heroKicker)}"></div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                <div class="field"><label>主标题（前段）</label><input id="st-titlea" maxlength="20" value="${esc(SITE.heroTitleA)}"></div>
+                <div class="field"><label>主标题（后段）</label><input id="st-titleb" maxlength="20" value="${esc(SITE.heroTitleB)}"></div>
+              </div>
+              <div class="field"><label>首页简介</label><textarea id="st-lead" rows="3" maxlength="200">${esc(SITE.heroLead)}</textarea></div>
+              <div style="display:grid;grid-template-columns:1fr 1fr 96px;gap:12px">
+                <div class="field"><label>赛季开始</label><input id="st-start" maxlength="20" value="${esc(SITE.seasonStart)}"></div>
+                <div class="field"><label>赛季结束</label><input id="st-end" maxlength="20" value="${esc(SITE.seasonEnd)}"></div>
+                <div class="field"><label>剩余天数</label><input id="st-days" type="number" min="0" max="999" value="${SITE.seasonDays}"></div>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                <div class="field"><label>赛制</label><input id="st-format" maxlength="30" value="${esc(SITE.format)}"></div>
+                <div class="field"><label>计分方式</label><input id="st-scoring" maxlength="30" value="${esc(SITE.scoring)}"></div>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+                <div class="field"><label>冠军卡指向</label><select id="st-champ">${GUILDS.map(g => `<option value="${g.slug}" ${g.slug === SITE.championSlug ? "selected" : ""}>${g.name}</option>`).join("")}</select></div>
+                <div class="field"><label>冠军卡标签</label><input id="st-champlabel" maxlength="30" value="${esc(SITE.championLabel)}"></div>
+                <div class="field"><label>冠军卡副标</label><input id="st-champsub" maxlength="40" value="${esc(SITE.championSub)}"></div>
+              </div>
+              <div class="field"><label>首页数据条</label>
+                <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+                  ${(SITE.stats || []).map((x, i) => `<div style="display:grid;gap:6px">
+                    <input class="sel" id="st-s${i}v" maxlength="12" value="${esc(x.v)}" style="width:100%;text-align:center">
+                    <input class="sel" id="st-s${i}l" maxlength="12" value="${esc(x.label)}" style="width:100%;text-align:center">
+                  </div>`).join("")}
+                </div>
+                <div class="hint" style="margin-top:6px">上排是数值，下排是标签。</div>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                <div class="field"><label>开放注册</label>
+                  <select id="st-reg"><option value="1" ${SITE.allowRegister !== false ? "selected" : ""}>允许注册</option><option value="0" ${SITE.allowRegister === false ? "selected" : ""}>关闭注册</option></select></div>
+                <div class="field"><label>开放创建公会</label>
+                  <select id="st-create"><option value="1" ${SITE.allowCreateGuild !== false ? "selected" : ""}>允许创建</option><option value="0" ${SITE.allowCreateGuild === false ? "selected" : ""}>关闭创建</option></select></div>
+              </div>
+              <div style="display:flex;gap:8px;align-items:center">
+                <button class="btn p" data-act="save-settings">保存设置</button>
+                <span class="hint">保存后首页立即刷新</span>
+              </div>
+            </div>
+          </div>` : ""}
+
+        ${tab === "log" ? `
+          <div class="card">
+            <div style="padding:14px 18px;border-bottom:1px solid var(--soft)"><b style="font-size:13.5px">最近操作</b></div>
+            <table class="logs"><tbody>
+              ${LOGS.map(l => `<tr>
+                <td class="t">${l.t}</td><td style="color:var(--tx)">${l.who}</td>
+                <td>${l.act}</td><td class="mono" style="font-size:11px;color:var(--mut)">${l.tg}</td>
+              </tr>`).join("")}
+            </tbody></table>
+            <div style="padding:13px 16px;border-top:1px solid var(--soft);display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+              <span class="hint">${SERVER_MODE ? "数据保存在服务器，重置会恢复示例内容（含站点设置）。" : "数据保存在本机浏览器，可随时重置。"}</span>
+              <button class="btn danger sm" data-act="reset-db">重置数据</button>
+            </div>
+          </div>` : ""}
+      </div>
+    </div>
+    <div style="height:60px"></div>
+  </div></div>`;
+}
+
+/* ============ MODALS ============ */
+function closeModal(){ $("#modal").innerHTML = ""; document.body.style.overflow = ""; }
+function openModal(html){
+  $("#modal").innerHTML = `<div class="overlay" data-act="close-modal">${html}</div>`;
+  document.body.style.overflow = "hidden";
+}
+
+function loginModal(){
+  if (SERVER_MODE) return authModal("login");
+  openModal(`<div class="modal" data-stop="1">
+    <div class="modal-h"><b>选择身份进入</b><button class="x" data-act="close-modal">✕</button></div>
+    <div class="modal-b">
+      <div class="acct" data-act="login-as" data-role="owner">
+        <div class="aa">林</div>
+        <div style="flex:1"><b>林深</b><span>霜序 · 会长 · 玩家视角</span></div>
+        ${ic("arrow")}
+      </div>
+      <div class="acct" data-act="login-as" data-role="admin">
+        <div class="aa" style="background:#332A1A;color:#E8C87A">岚</div>
+        <div style="flex:1"><b>阿岚</b><span>站长 · 可进入管理后台</span></div>
+        ${ic("arrow")}
+      </div>
+      <div class="acct" data-act="login-as" data-role="guest" style="margin-bottom:0">
+        <div class="aa" style="background:#242A31;color:#8C97A3">?</div>
+        <div style="flex:1"><b>游客</b><span>未登录 · 只能浏览</span></div>
+        ${ic("arrow")}
+      </div>
+      <p class="hint" style="margin:14px 0 0">当前版本用身份切换代替登录。选「站长 · 阿岚」后，导航会出现「管理」。</p>
+    </div>
+  </div>`);
+}
+
+/* 真实登录 / 注册 */
+function authModal(mode){
+  if (mode === "register" && SITE.allowRegister === false) mode = "login";
+  const m = mode === "register" ? "register" : "login";
+  openModal(`<div class="modal" data-stop="1" style="max-width:410px">
+    <div class="modal-h"><b>${m === "login" ? "登录方碑" : "注册账号"}</b><button class="x" data-act="close-modal">✕</button></div>
+    <div class="modal-b">
+      <div class="segs" style="margin-bottom:14px;width:100%">
+        <button class="${m === "login" ? "on" : ""}" data-act="auth-mode" data-v="login" style="flex:1">登录</button>
+        ${SITE.allowRegister === false ? "" : `<button class="${m === "register" ? "on" : ""}" data-act="auth-mode" data-v="register" style="flex:1">注册</button>`}
+      </div>
+      <div class="form">
+        <div class="field"><label>用户名</label>
+          <input id="au-user" autocomplete="username" placeholder="3–24 位字母、数字或下划线"></div>
+        ${m === "register" ? `
+        <div class="field"><label>游戏内名称</label>
+          <input id="au-name" maxlength="16" placeholder="显示在成员列表里"></div>
+        <div class="field"><label>MC ID（选填）</label>
+          <input id="au-mc" maxlength="16" placeholder="用于对手核对"></div>` : ""}
+        <div class="field"><label>密码</label>
+          <input id="au-pass" type="password" autocomplete="${m === "login" ? "current-password" : "new-password"}" placeholder="至少 6 位"></div>
+      </div>
+      <p class="hint" style="margin:12px 0 0;line-height:1.7">${m === "login"
+        ? "没有账号？切到「注册」，几秒钟就好。"
+        : "注册后即可创建公会、提交战报；第一个管理员账号由服务器环境变量生成。"}</p>
+    </div>
+    <div class="modal-f">
+      <button class="btn p" data-act="auth-submit" data-v="${m}">${m === "login" ? "登录" : "注册并登录"}</button>
+    </div>
+  </div>`);
+  setTimeout(() => { const i = $("#au-user"); if (i) i.focus(); }, 40);
+}
+
+function applyModal(slug){
+  const g = bySlug(slug);
+  openModal(`<div class="modal" data-stop="1">
+    <div class="modal-h"><b>申请加入 ${g.name}</b><button class="x" data-act="close-modal">✕</button></div>
+    <div class="modal-b">
+      <div class="field" style="margin-bottom:12px">
+        <label>一句话介绍自己</label>
+        <textarea id="apply-msg" rows="3" placeholder="例如：生存老玩家，主玩建筑，周三周六都能上线。"></textarea>
+      </div>
+      <div class="kv">
+        <dt>申请公会</dt><dd>${g.name} · Lv.${g.level}</dd>
+        <dt>我的角色</dt><dd>${ME.mc} · 平台 #SH-0142</dd>
+        <dt>审核人</dt><dd>会长 / 副会长</dd>
+      </div>
+    </div>
+    <div class="modal-f">
+      <button class="btn g" data-act="close-modal">取消</button>
+      <button class="btn p" data-act="apply-confirm" data-g="${slug}">提交申请</button>
+    </div>
+  </div>`);
+}
+
+/* 测试说明 */
+function helpModal(){
+  openModal(`<div class="modal" data-stop="1" style="max-width:530px">
+    <div class="modal-h"><b>使用说明</b><button class="x" data-act="close-modal">✕</button></div>
+    <div class="modal-b">
+      <p class="hint" style="margin:0 0 14px;line-height:1.7">方碑已上线运行。你的所有操作都会保存在本机浏览器里，刷新不丢。</p>
+      <div style="display:grid;gap:11px">
+        ${[
+          ["切换身份","右上角头像 → 切换身份。选「阿岚」进入站长视角，导航会多出「管理」。"],
+          ["建会 → 上榜","公会榜右上「创建公会」提交 → 管理 → 建会审核点通过 → 榜单立刻出现这个公会。"],
+          ["战绩确认","公会空间 → 战报 → 提交战报；再到「我的 → 待我确认」点确认，积分 +6。"],
+          ["赛事","赛事详情可报名；管理 → 赛事编排录入半决赛比分，胜者自动进决赛。"],
+          ["成员与资料","公会空间 → 成员可移出；会长可在封面右侧编辑资料。"],
+          ["重置数据","管理 → 审计日志底部「重置数据」，或给网址加 ?reset=1。"]
+        ].map(x => `<div style="display:flex;gap:11px;font-size:12px;color:var(--tx2);line-height:1.65">
+          <span style="color:var(--ac6);font-family:var(--mono);font-size:10px;min-width:64px;padding-top:3px">${x[0]}</span>
+          <span>${x[1]}</span></div>`).join("")}
+      </div>
+    </div>
+    <div class="modal-f"><button class="btn p" data-act="close-modal">知道了</button></div>
+  </div>`);
+}
+
+/* 创建公会 */
+const GUILD_COLORS = ["#2DD4BF","#E8B44B","#C9684A","#5E8C4A","#3E6F8E","#7A5C8F","#B4552F","#9AA5A0"];
+function createGuildModal(){
+  if(!state.session){ loginModal(); toast("请先登录"); return; }
+  openModal(`<div class="modal" data-stop="1" style="max-width:560px">
+    <div class="modal-h"><b>创建公会</b><button class="x" data-act="close-modal">✕</button></div>
+    <div class="modal-b">
+      <div class="form">
+        <div style="display:grid;grid-template-columns:1fr 96px;gap:12px">
+          <div class="field"><label>公会名称</label><input id="cg-name" maxlength="12" placeholder="2–12 个字"></div>
+          <div class="field"><label>徽章字</label><input id="cg-badge" maxlength="1" placeholder="单字"></div>
+        </div>
+        <div class="field"><label>所在服务器（自填，平台不校验）</label>
+          <select id="cg-server">${["霜原服","岚岛服","橡木服","星海服","其他"].map(s => `<option>${s}</option>`).join("")}</select></div>
+        <div class="field"><label>公会主色</label>
+          <div style="display:flex;gap:9px;flex-wrap:wrap" id="cg-colors">
+            ${GUILD_COLORS.map((c,i) => `<button class="cgc ${i===0?"on":""}" data-act="cg-color" data-c="${c}" style="background:${c}" aria-label="${c}"></button>`).join("")}
+          </div>
+          <input type="hidden" id="cg-color" value="${GUILD_COLORS[0]}">
+        </div>
+        <div class="field"><label>一句话简介</label>
+          <textarea id="cg-intro" rows="3" placeholder="你们是什么样的公会？主要玩什么？"></textarea></div>
+      </div>
+      <div class="hint" style="margin-top:12px;line-height:1.7">提交后进入站务审核。通过后立即出现在公会榜，初始 Lv.1、1,000 积分。</div>
+    </div>
+    <div class="modal-f">
+      <button class="btn g" data-act="close-modal">取消</button>
+      <button class="btn p" data-act="create-guild-confirm">提交审核</button>
+    </div>
+  </div>`);
+}
+
+/* 战报详情 */
+function matchDetailModal(slug, idx){
+  const g = bySlug(slug); if(!g) return;
+  const m = recentMatches(g)[idx]; if(!m) return;
+  const st = MATCH_ST[m.st];
+  openModal(`<div class="modal" data-stop="1" style="max-width:470px">
+    <div class="modal-h"><b>战报详情</b><button class="x" data-act="close-modal">✕</button></div>
+    <div class="modal-b">
+      <div style="display:flex;align-items:center;justify-content:center;gap:12px;padding:4px 0 18px">
+        <div style="text-align:center;flex:1">
+          <div class="gbadge" style="background:${g.color};width:34px;height:34px;margin:0 auto 7px;border-radius:8px">${g.badge}</div>
+          <div style="font-size:12.5px;font-weight:600">${g.name}</div>
+        </div>
+        <div style="text-align:center">
+          <div class="mono" style="font-size:25px;font-weight:700;letter-spacing:.02em">${m.sa} : ${m.sb}</div>
+          <div style="margin-top:6px"><span class="st ${st.cls}">${st.label}</span></div>
+        </div>
+        <div style="text-align:center;flex:1">
+          <div class="gbadge" style="background:${m.opp.color};width:34px;height:34px;margin:0 auto 7px;border-radius:8px">${m.opp.badge}</div>
+          <div style="font-size:12.5px;font-weight:600">${m.opp.name}</div>
+        </div>
+      </div>
+      <div class="kv" style="border-top:1px solid var(--soft);padding-top:14px">
+        <dt>地图</dt><dd>${m.map}</dd>
+        <dt>时间</dt><dd class="mono">${m.time}</dd>
+        <dt>赛制</dt><dd>BO3</dd>
+        <dt>提交人</dt><dd>${g.name} · 白露</dd>
+        <dt>确认状态</dt><dd>${m.st === "confirmed" ? "对方已确认，积分已计入" : m.st === "pending" ? "等待 " + m.opp.name + " 确认" : "对方提出异议，站务处理中"}</dd>
+      </div>
+      <div style="margin-top:14px;padding:12px;border:1px solid var(--line);border-radius:9px;background:var(--s900)">
+        <div style="font:10px var(--mono);letter-spacing:.12em;color:var(--mut);margin-bottom:8px">TIMELINE</div>
+        <div style="display:flex;flex-direction:column;gap:7px;font-size:11.5px;color:var(--tx2)">
+          <div style="display:flex;gap:8px"><span style="color:var(--ac6)">01</span><span>提交比分 ${m.sa}:${m.sb} · ${m.time}</span></div>
+          <div style="display:flex;gap:8px"><span style="color:${m.st === "pending" ? "var(--gd)" : "var(--ac6)"}">02</span><span>${m.st === "pending" ? "等待对方确认（24h 内）" : m.st === "disputed" ? "对方提出异议，转站务仲裁" : "对方已确认"}</span></div>
+          <div style="display:flex;gap:8px"><span style="color:${m.st === "confirmed" ? "var(--ac6)" : "#4E5965"}">03</span><span>${m.st === "confirmed" ? "积分已计入赛季榜" : "尚未计入积分"}</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-f">
+      ${m.st === "pending" ? `<button class="btn g" data-act="toast" data-msg="已向对方发送催确认提醒">催确认</button>` : ""}
+      <button class="btn p" data-act="close-modal">关闭</button>
+    </div>
+  </div>`);
+}
+
+/* 编辑公会 */
+function editGuildModal(slug){
+  const g = bySlug(slug);
+  openModal(`<div class="modal" data-stop="1" style="max-width:520px">
+    <div class="modal-h"><b>编辑公会资料</b><button class="x" data-act="close-modal">✕</button></div>
+    <div class="modal-b">
+      <div class="form">
+        <div class="field"><label>公会简介</label><textarea id="eg-intro" rows="4">${g.intro}</textarea></div>
+        <div class="field"><label>招募状态</label>
+          <select id="eg-recruit"><option value="1" ${g.recruit ? "selected" : ""}>开放招募</option><option value="0" ${g.recruit ? "" : "selected"}>暂停招募</option></select></div>
+      </div>
+    </div>
+    <div class="modal-f">
+      <button class="btn g" data-act="close-modal">取消</button>
+      <button class="btn p" data-act="edit-guild-confirm" data-g="${slug}">保存</button>
+    </div>
+  </div>`);
+}
+
+/* 提交战报 */
+function submitMatchModal(slug){
+  const g = bySlug(slug);
+  const others = GUILDS.filter(x => x.slug !== slug);
+  openModal(`<div class="modal" data-stop="1" style="max-width:540px">
+    <div class="modal-h"><b>提交战报 · ${g.name}</b><button class="x" data-act="close-modal">✕</button></div>
+    <div class="modal-b">
+      <div class="bp-step">
+        <span class="on">1 提交比分</span><span>2 对方确认</span><span>3 计入积分</span>
+      </div>
+      <div class="form">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="field"><label>对手公会</label>
+            <select id="sm-opp">${others.map(o => `<option value="${o.name}">${o.name}</option>`).join("")}</select></div>
+          <div class="field"><label>赛制</label>
+            <select id="sm-bo"><option>BO3</option><option>BO1</option><option>BO5</option></select></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="field"><label>我方比分</label><input id="sm-a" type="number" min="0" max="5" value="2"></div>
+          <div class="field"><label>对方比分</label><input id="sm-b" type="number" min="0" max="5" value="1"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="field"><label>地图</label>
+            <select id="sm-map">${MAPS.map(m => `<option>${m.name}</option>`).join("")}</select></div>
+          <div class="field"><label>比赛日期</label><input id="sm-date" type="date" value="2026-10-19"></div>
+        </div>
+        <div class="field"><label>凭证（选填）</label>
+          <textarea id="sm-ev" rows="2" placeholder="录像链接、截图说明，或对方队长的确认留言"></textarea></div>
+      </div>
+      <div style="margin-top:14px;padding:10px 12px;border:1px solid rgba(45,212,191,.22);border-radius:8px;background:rgba(45,212,191,.05);font-size:11.5px;color:#B7D6D1;line-height:1.75">
+        提交后会给对方会长 / 副会长发站内信，对方在 24 小时内确认，这一场才计入积分。<br>
+        对方拒绝或超时未确认，场次转入争议，由站务按凭证裁定。
+      </div>
+    </div>
+    <div class="modal-f">
+      <button class="btn g" data-act="close-modal">取消</button>
+      <button class="btn p" data-act="submit-match-confirm">提交并通知对方</button>
+    </div>
+  </div>`);
+}
+
+/* BP */
+function openBp(){
+  state.bp = {step:0, status:{}, order:[
+    {t:"A", k:"ban", label:"霜序 BAN"},
+    {t:"B", k:"ban", label:"红石工坊 BAN"},
+    {t:"A", k:"pick", label:"霜序 PICK"},
+    {t:"B", k:"pick", label:"红石工坊 PICK"},
+    {t:"-", k:"auto", label:"剩余为决胜图"}
+  ]};
+  renderBp();
+}
+function renderBp(){
+  const bp = state.bp;
+  if (!bp) return;
+  const cur = bp.order[bp.step] || bp.order[4];
+  const left = MAPS.filter(m => !bp.status[m.id]);
+  const done = bp.step >= 4;
+  let title = done ? "BP 完成 · 最终地图" : cur.label + " 阶段";
+  if (!done && bp.step === 4) title = "BP 完成 · 最终地图";
+
+  const body = `<div class="modal" data-stop="1" style="max-width:620px">
+    <div class="modal-h">
+      <b>地图 BP · 霜序 vs 红石工坊</b>
+      <button class="x" data-act="close-modal">✕</button>
+    </div>
+    <div class="modal-b">
+      <div class="bp-step">
+        ${bp.order.map((o,i) => `<span class="${i===bp.step?"on":i<bp.step?"done":""}">${i+1}. ${o.label}</span>`).join("")}
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px">
+        <b style="font-size:13px">${title}</b>
+        <span class="mono" style="font-size:10px;color:var(--mut)">BO3 · 7 图池</span>
+      </div>
+      <div class="mapgrid">
+        ${MAPS.map(m => {
+          const st = bp.status[m.id];
+          return `<div class="map ${st==="ban"?"banned":st==="pick"?"picked":""}" data-act="bp-pick" data-id="${m.id}">
+            <div class="tint" style="background:linear-gradient(150deg,${hexA(m.c1,.55)},${m.c2})"></div>
+            <span>${m.name}</span>
+          </div>`;
+        }).join("")}
+      </div>
+      <div style="margin-top:14px;font-size:12px;color:var(--tx2)">
+        ${done || bp.step > 4 ? `<span class="pill t">决胜图</span> ${left[0] ? left[0].name : "—"} · 剩余 ${left.length} 张` :
+          `剩余 ${left.length} 张可选 · 双方各 ban 1、pick 1`}
+      </div>
+    </div>
+    <div class="modal-f">
+      <button class="btn g" data-act="bp-reset">重置</button>
+      <button class="btn p" data-act="${done?"bp-finish":"close-modal"}">${done?"完成 BP":"暂存"}</button>
+    </div>
+  </div>`;
+  openModal(body);
+}
+
+/* SEARCH */
+function searchModal(){
+  openModal(`<div class="modal" data-stop="1" style="max-width:520px">
+    <div class="modal-h"><b>全站搜索</b><button class="x" data-act="close-modal">✕</button></div>
+    <div class="modal-b">
+      <div class="search" style="max-width:none">
+        ${ic("search")}
+        <input id="sq" data-q="global" placeholder="搜公会、赛事、玩家…" value="${esc(state.searchQ)}" autofocus>
+      </div>
+      <div id="sres" style="margin-top:12px">${searchResults()}</div>
+    </div>
+  </div>`);
+  setTimeout(() => { const i = $("#sq"); if (i) i.focus(); }, 30);
+}
+function searchResults(){
+  const q = state.searchQ.trim().toLowerCase();
+  if (!q) return `<div class="hint">输入公会名试试，比如「霜」或「北辰」。</div>`;
+  const gs = GUILDS.filter(g => g.name.toLowerCase().includes(q) || g.slug.includes(q)).slice(0,5);
+  const ts = TOURNAMENTS.filter(t => t.name.toLowerCase().includes(q)).slice(0,3);
+  if (!gs.length && !ts.length) return `<div class="hint">没有找到「${esc(q)}」相关的内容。</div>`;
+  return `${gs.map(g => `<a href="#/g/${g.slug}" data-act="close-modal" style="display:flex;gap:10px;align-items:center;padding:9px 8px;border-radius:8px">
+      <span class="gbadge" style="width:24px;height:24px;font-size:10px;border-radius:6px;background:${g.color}">${g.badge}</span>
+      <b style="font-size:12.5px">${g.name}</b><span class="mono" style="font-size:10px;color:var(--mut);margin-left:auto">${fmt(pts(g))} 分</span>
+    </a>`).join("")}
+    ${ts.map(t => `<a href="#/event/${t.id}" data-act="close-modal" style="display:flex;gap:10px;align-items:center;padding:9px 8px;border-radius:8px">
+      <span class="pill">赛事</span><b style="font-size:12.5px">${t.name}</b>
+    </a>`).join("")}`;
+}
+
+/* MAIL DRAWER */
+function openMail(){
+  const list = MAILS.map((m, i) => {
+    const open = state.openMail === i;
+    return `<div class="mail" data-act="mail-item" data-i="${i}" style="cursor:pointer">
+      <b>${m.unread ? '<i class="unread"></i>' : ""}${m.title}</b>
+      <div class="from">${m.from} · ${m.time}</div>
+      ${open ? `<p>${m.body}</p>` : `<p style="color:#5C6774;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${m.body}</p>`}
+    </div>`;
+  }).join("");
+  $("#drawer").innerHTML = `
+    <div class="drawer-ov" data-act="mail-close"></div>
+    <aside class="drawer">
+      <div class="drawer-h">
+        <b style="font-size:14px">站内信</b>
+        <div style="display:flex;align-items:center;gap:8px">
+          <button class="btn g sm" data-act="mail-read-all">全部已读</button>
+          <button class="x" data-act="mail-close">✕</button>
+        </div>
+      </div>
+      <div class="drawer-b">${list}</div>
+    </aside>`;
+  document.body.style.overflow = "hidden";
+}
+function closeMail(){ $("#drawer").innerHTML = ""; document.body.style.overflow = ""; }
+
+/* 对阵图：按实际卡高把后续轮次垂直居中 */
+function layoutBracket(){
+  const qf = document.querySelectorAll(".bround:first-child .bm");
+  const midB = document.querySelectorAll(".bround.mid .bm");
+  const lastB = document.querySelector(".bround.last .bm");
+  if (!qf.length) return;
+  const h = qf[0].getBoundingClientRect().height;
+  if (!h) return;
+  const g = 14;
+  if (midB[0]) midB[0].style.marginTop = (h/2 + g/2) + "px";
+  if (midB[1]) midB[1].style.marginTop = (h + g) + "px";
+  if (lastB) lastB.style.marginTop = (h*1.5 + g*1.5) + "px";
+}
+
+/* ============ ROUTER ============ */
+function render(){
+  const h = location.hash.replace(/^#/, "") || "/";
+  state.route = h;
+  const app = $("#app");
+  let html = "";
+  if (h === "/" || h === "") html = HomeView();
+  else if (h === "/rank") html = RankView();
+  else if (h.startsWith("/g/")) html = GuildView(h.slice(3));
+  else if (h === "/events") html = EventsView();
+  else if (h.startsWith("/event/")) html = EventView(h.slice(7));
+  else if (h === "/me") html = MeView();
+  else if (h === "/admin") html = AdminView();
+  else html = `<div class="wrap"><div class="empty" style="padding:120px 0"><b>页面不存在</b><a class="btn g" href="#/" style="margin-top:16px">回首页</a></div></div>`;
+
+  app.innerHTML = html;
+  renderHeader();
+  layoutBracket();
+  window.scrollTo({top:0, behavior:"instant"});
+  saveDB();
+}
+
+/* ============ EVENTS ============ */
+document.addEventListener("click", (e) => {
+  const t = e.target.closest("[data-act]");
+  if (!t) { if (state.menu) { state.menu = false; renderHeader(); } return; }
+  const act = t.dataset.act;
+  if (act === "close-modal") {
+    if (t.classList.contains("overlay") && e.target !== t) return;
+    closeModal(); return;
+  }
+  if (t.closest(".modal") && act !== "close-modal" && t.dataset.stop === "1") return;
+
+  switch (act) {
+    case "go": state.menu = false; location.hash = t.dataset.href; break;
+    case "login-open": state.menu = false; renderHeader(); loginModal(); break;
+    case "auth-mode": { authModal(t.dataset.v); break; }
+    case "auth-submit": {
+      const mode = t.dataset.v;
+      const username = ($("#au-user").value || "").trim();
+      const password = $("#au-pass").value || "";
+      if (!username || !password) { toast("请填写用户名和密码"); break; }
+      const body = { username, password };
+      if (mode === "register") {
+        body.name = ($("#au-name").value || "").trim() || username;
+        body.mc = ($("#au-mc").value || "").trim();
+      }
+      t.disabled = true;
+      api(mode === "register" ? "/api/register" : "/api/login", { method: "POST", body: JSON.stringify(body) })
+        .then(d => { applyServer(d); closeModal(); toast(mode === "register" ? "注册成功，欢迎加入" : "欢迎回来"); })
+        .catch(e => { toast(e.message); t.disabled = false; });
+      break;
+    }
+    case "login-as": {
+      const r = t.dataset.role;
+      state.session = r === "guest" ? null : r === "admin" ? {name:"阿岚", role:"admin"} : {name:"林深", role:"owner"};
+      state.menu = false;
+      closeModal(); render();
+      toast(r === "guest" ? "已退出登录" : r === "admin" ? "已切换为管理员视角" : "已切换为玩家视角");
+      break;
+    }
+    case "logout": {
+      if (SERVER_MODE) {
+        api("/api/logout", { method: "POST" }).then(() => {
+          state.session = null; ME_ID = null; CONFIRMS = []; state.menu = false;
+          render(); toast("已退出登录");
+        }).catch(() => toast("退出失败"));
+        break;
+      }
+      state.session = null; state.menu = false; render(); toast("已退出登录"); break;
+    }
+    case "user-menu": state.menu = !state.menu; renderHeader(); break;
+    case "theme": {
+      const cur = document.documentElement.getAttribute("data-theme") === "light" ? "light" : "dark";
+      const next = cur === "light" ? "dark" : "light";
+      document.documentElement.setAttribute("data-theme", next);
+      try { localStorage.setItem("fb_theme", next); } catch (e) {}
+      renderHeader();
+      break;
+    }
+    case "apply": {
+      if (!state.session) { loginModal(); toast("请先登录"); break; }
+      if (state.applied) { toast("你已经提交过申请了，等待审核"); break; }
+      applyModal(t.dataset.g); break;
+    }
+    case "apply-confirm": {
+      if (SERVER_MODE) {
+        const slug = t.dataset.g;
+        const msgEl = $("#apply-msg");
+        op("joinGuild", { slug, message: msgEl ? msgEl.value : "" }).then(ok => {
+          if (ok) { closeModal(); toast("已加入公会 / 申请已提交"); }
+        });
+        break;
+      }
+      state.applied = true; closeModal(); render();
+      toast("申请已提交 · 会长审核后会收到站内信"); break;
+    }
+    case "submit-match": {
+      if (!state.session) { loginModal(); toast("请先登录"); break; }
+      submitMatchModal(t.dataset.g || ME.guild); break;
+    }
+    case "submit-match-confirm": {
+      if (SERVER_MODE) {
+        const oppName = $("#sm-opp").value;
+        const oppG = GUILDS.find(x => x.name === oppName);
+        const sa = +$("#sm-a").value, sb = +$("#sm-b").value;
+        const map = $("#sm-map").value;
+        if (sa === sb) { toast("比分不能相同，请检查后重填"); break; }
+        op("reportMatch", { oppSlug: oppG ? oppG.slug : "", sa, sb, map }).then(ok => {
+          if (ok) { closeModal(); state.guildTab = "matches"; render(); toast("已提交 · 已通知「" + oppName + "」确认"); }
+        });
+        break;
+      }
+      const opp = $("#sm-opp").value;
+      const sa = +$("#sm-a").value, sb = +$("#sm-b").value;
+      const map = $("#sm-map").value;
+      if (sa === sb) { toast("比分不能相同，请检查后重填"); break; }
+      state.myReports.unshift({opp, sa, sb, map});
+      state.guildTab = "matches";
+      closeModal();
+      if (state.route.startsWith("/g/")) render(); else location.hash = "#/g/" + ME.guild;
+      toast("已提交 · 已通知「" + opp + "」确认");
+      break;
+    }
+    case "confirm-match": {
+      if (SERVER_MODE) {
+        op("confirmMatch", { id: t.dataset.id }).then(ok => { if (ok) toast("已确认 · 积分已更新"); });
+        break;
+      }
+      const c = CONFIRMS.find(x => x.id === t.dataset.id);
+      CONFIRMS = CONFIRMS.filter(x => x.id !== t.dataset.id);
+      const mg = bySlug(ME.guild);
+      if (c && c.win) mg.points += 6;
+      render();
+      toast("已确认 · 积分 " + (c && c.win ? "+6" : "−6") + " 已计入");
+      break;
+    }
+    case "reject-match": {
+      if (SERVER_MODE) {
+        op("disputeMatch", { id: t.dataset.id, reason: "对方提出异议" }).then(ok => { if (ok) toast("已提出异议，转入争议"); });
+        break;
+      }
+      const c = CONFIRMS.find(x => x.id === t.dataset.id);
+      CONFIRMS = CONFIRMS.filter(x => x.id !== t.dataset.id);
+      render();
+      toast("已提出异议，该场次转入争议（" + (c ? c.other : "") + "）");
+      break;
+    }
+    case "report-guild": toast("举报已提交，等待站务处理"); break;
+    case "help": helpModal(); break;
+    case "create-guild": createGuildModal(); break;
+    case "cg-color": {
+      $("#cg-color").value = t.dataset.c;
+      document.querySelectorAll("#cg-colors .cgc").forEach(b => b.classList.toggle("on", b === t));
+      break;
+    }
+    case "create-guild-confirm": {
+      if (SERVER_MODE) {
+        const nm = ($("#cg-name").value || "").trim();
+        if (nm.length < 2) { toast("公会名至少 2 个字"); break; }
+        op("createGuild", {
+          name: nm, badge: $("#cg-badge").value, color: $("#cg-color").value,
+          server: $("#cg-server").value, intro: ($("#cg-intro").value || "").trim()
+        }).then(ok => { if (ok) { closeModal(); toast("已提交建会申请，等待站务审核"); } });
+        break;
+      }
+      const name = ($("#cg-name").value || "").trim();
+      const intro = ($("#cg-intro").value || "").trim();
+      if (name.length < 2) { toast("公会名至少 2 个字"); break; }
+      if (GUILDS.some(g => g.name === name) || REVIEWS.some(r => r.name === name)) { toast("这个公会名已经被占用了"); break; }
+      const badge = firstChar($("#cg-badge").value || name);
+      REVIEWS.unshift({id:"r" + Date.now(), name, badge, color: $("#cg-color").value,
+        by: state.session.name, server: $("#cg-server").value, time:"刚刚",
+        intro: intro || "新提交的公会，还没有写简介。"});
+      closeModal(); render();
+      toast("已提交建会申请，等待站务审核");
+      break;
+    }
+    case "match-detail": {
+      const slug = state.route.startsWith("/g/") ? state.route.slice(3) : "";
+      matchDetailModal(slug, +t.dataset.i);
+      break;
+    }
+    case "edit-guild": editGuildModal(t.dataset.g); break;
+    case "edit-guild-confirm": {
+      if (SERVER_MODE) {
+        op("editGuild", { slug: t.dataset.g, intro: $("#eg-intro").value.trim(), recruit: $("#eg-recruit").value === "1" })
+          .then(ok => { if (ok) { closeModal(); toast("公会资料已保存"); } });
+        break;
+      }
+      const eg = bySlug(t.dataset.g);
+      eg.intro = $("#eg-intro").value.trim() || eg.intro;
+      eg.recruit = $("#eg-recruit").value === "1";
+      closeModal(); render(); toast("公会资料已保存");
+      break;
+    }
+    case "kick": {
+      if (SERVER_MODE) {
+        op("kickMember", { name: t.dataset.n }).then(ok => { if (ok) toast("已移出 " + t.dataset.n); });
+        break;
+      }
+      const key = t.dataset.g + ":" + t.dataset.n;
+      if (!state.removed.includes(key)) state.removed.push(key);
+      render(); toast("已移出 " + t.dataset.n);
+      break;
+    }
+    case "signup": {
+      if (!state.session) { loginModal(); toast("请先登录"); break; }
+      if (SERVER_MODE) {
+        op("signup", { tournamentId: t.dataset.t }).then(ok => { if (ok) toast("报名成功"); });
+        break;
+      }
+      state.signups[t.dataset.t] = "霜序";
+      render(); toast("报名成功 · 已通知赛事组");
+      break;
+    }
+    case "save-score": {
+      if (SERVER_MODE) {
+        const sid = t.dataset.id;
+        const s1 = +$("#sc-" + sid + "-a").value, s2 = +$("#sc-" + sid + "-b").value;
+        if (s1 === s2) { toast("淘汰赛不能平局，请检查比分"); break; }
+        op("saveScore", { id: sid, sa: s1, sb: s2 }).then(ok => { if (ok) toast("比分已保存"); });
+        break;
+      }
+      const id = t.dataset.id;
+      const sa = +$("#sc-" + id + "-a").value, sb = +$("#sc-" + id + "-b").value;
+      if (sa === sb) { toast("淘汰赛不能平局，请检查比分"); break; }
+      let mt = null;
+      BRACKET.forEach(r => r.ms.forEach(m => { if (m.id === id) mt = m; }));
+      if (!mt) break;
+      mt.sa = sa; mt.sb = sb; mt.done = true;
+      const winner = sa > sb ? mt.a : mt.b;
+      const final = BRACKET[2].ms[0];
+      if (id === "r2m1") final.a = winner;
+      if (id === "r2m2") final.b = winner;
+      render(); toast("比分已保存 · " + winner + " 晋级");
+      break;
+    }
+    case "save-settings": {
+      const site = {
+        brand: $("#st-brand").value.trim(),
+        brandSub: $("#st-brandsub").value.trim(),
+        heroKicker: $("#st-kicker").value.trim(),
+        heroTitleA: $("#st-titlea").value.trim(),
+        heroTitleB: $("#st-titleb").value.trim(),
+        heroLead: $("#st-lead").value.trim(),
+        seasonStart: $("#st-start").value.trim(),
+        seasonEnd: $("#st-end").value.trim(),
+        seasonDays: +$("#st-days").value || 0,
+        format: $("#st-format").value.trim(),
+        scoring: $("#st-scoring").value.trim(),
+        championSlug: $("#st-champ").value,
+        championLabel: $("#st-champlabel").value.trim(),
+        championSub: $("#st-champsub").value.trim(),
+        stats: [0, 1, 2, 3].map(i => ({ v: $("#st-s" + i + "v").value.trim(), label: $("#st-s" + i + "l").value.trim() })),
+        allowRegister: $("#st-reg").value === "1",
+        allowCreateGuild: $("#st-create").value === "1"
+      };
+      if (SERVER_MODE) {
+        op("saveSettings", { site }).then(ok => { if (ok) toast("站点设置已保存"); });
+      } else {
+        Object.assign(SITE, site);
+        saveDB(); render(); toast("站点设置已保存");
+      }
+      break;
+    }
+    case "reset-db": {
+      if (SERVER_MODE) {
+        if (!window.confirm("确定清空全部数据并恢复示例数据？该操作不可撤销。")) break;
+        op("resetData", {}).then(ok => { if (ok) toast("已重置为示例数据"); });
+        break;
+      }
+      resetDB(); break;
+    }
+    case "mail-item": {
+      if (SERVER_MODE) {
+        state.openMail = +t.dataset.i;
+        const mm = MAILS[state.openMail];
+        if (mm) op("readMail", { id: mm.id }).then(() => { openMail(); renderHeader(); });
+        else { openMail(); renderHeader(); }
+        break;
+      }
+      state.openMail = +t.dataset.i;
+      if (MAILS[state.openMail]) MAILS[state.openMail].unread = false;
+      openMail(); renderHeader();
+      break;
+    }
+    case "mail-read-all": {
+      if (SERVER_MODE) {
+        op("readMail", { all: true }).then(ok => { if (ok) { openMail(); renderHeader(); toast("全部标为已读"); } });
+        break;
+      }
+      MAILS.forEach(m => m.unread = false);
+      openMail(); renderHeader(); toast("全部标为已读");
+      break;
+    }
+    case "gtab": state.guildTab = t.dataset.v; render(); break;
+    case "atab": state.adminTab = t.dataset.v; render(); break;
+    case "sort": state.rankSort = t.dataset.v;
+      document.querySelectorAll("[data-act='sort']").forEach(b => b.classList.toggle("on", b.dataset.v === state.rankSort));
+      $("#rank-host").innerHTML = rankTable(filteredGuilds(), false);
+      break;
+    case "mail-open": state.menu = false; renderHeader(); openMail(); break;
+    case "mail-close": closeMail(); break;
+    case "search-open": state.menu = false; renderHeader(); searchModal(); break;
+    case "bp-open": openBp(); break;
+    case "bp-pick": {
+      const bp = state.bp;
+      if (!bp || bp.step > 4) break;
+      const id = t.dataset.id;
+      if (bp.status[id]) { toast("这张图已经被处理过了"); break; }
+      const step = bp.order[bp.step];
+      if (step.k === "auto") break;
+      bp.status[id] = step.k;
+      bp.step++;
+      renderBp();
+      break;
+    }
+    case "bp-reset": state.bp = {step:0, status:{}, order:state.bp.order}; renderBp(); break;
+    case "bp-finish": closeModal(); toast("BP 已提交，最终地图已锁定"); break;
+    case "rev-approve": {
+      if (SERVER_MODE) { op("reviewGuild", { id: t.dataset.id, approve: true }).then(ok => { if (ok) toast("已通过建会申请，已上榜"); }); break; }
+      const id = t.dataset.id;
+      const r = REVIEWS.find(x => x.id === id);
+      REVIEWS = REVIEWS.filter(x => x.id !== id);
+      if (r && !GUILDS.some(g => g.name === r.name)) {
+        GUILDS.push({slug:"g" + Date.now(), name:r.name, badge:r.badge, color:r.color, level:1, points:1000,
+          wr:0, members:1, trend:0, recruit:true, server:r.server, founded:"2026-10-19", online:1,
+          tags:["新会"], intro:r.intro});
+      }
+      render(); toast(`已通过「${r.name}」的建会申请，已上榜`); break;
+    }
+    case "rev-reject": {
+      if (SERVER_MODE) { op("reviewGuild", { id: t.dataset.id, approve: false }).then(ok => { if (ok) toast("已驳回建会申请"); }); break; }
+      const id = t.dataset.id;
+      const r = REVIEWS.find(x => x.id === id);
+      REVIEWS = REVIEWS.filter(x => x.id !== id);
+      render(); toast(`已驳回「${r.name}」，站内信已通知`); break;
+    }
+    case "rep-uphold": {
+      if (SERVER_MODE) { op("resolveReport", { id: t.dataset.id, uphold: true }).then(ok => { if (ok) toast("举报成立，已扣分"); }); break; }
+      const id = t.dataset.id;
+      const r = REPORTS.find(x => x.id === id);
+      REPORTS = REPORTS.filter(x => x.id !== id);
+      render(); toast(`举报成立：${r.target} 将被扣分并警告`); break;
+    }
+    case "rep-dismiss": {
+      if (SERVER_MODE) { op("resolveReport", { id: t.dataset.id, uphold: false }).then(ok => { if (ok) toast("已驳回举报"); }); break; }
+      const id = t.dataset.id;
+      const r = REPORTS.find(x => x.id === id);
+      REPORTS = REPORTS.filter(x => x.id !== id);
+      render(); toast(`已驳回对「${r.target}」的举报`); break;
+    }
+    case "honor-award": {
+      if (SERVER_MODE) {
+        const gsel = $("#h-guild"), tt = $("#h-title"), rk = $("#h-rank"), tr2 = $("#h-tier");
+        if (!tt.value.trim() || !rk.value.trim()) { toast("请填写荣誉名称与名次"); break; }
+        op("awardHonor", { slug: gsel.value, title: tt.value.trim(), rank: rk.value.trim(), tier: tr2.value })
+          .then(ok => { if (ok) toast("荣誉已颁发"); });
+        break;
+      }
+      const gi = $("#h-guild"), ti = $("#h-title"), ri = $("#h-rank"), tr = $("#h-tier");
+      if (!ti.value.trim() || !ri.value.trim()) { toast("请填写荣誉名称与名次"); break; }
+      const g = bySlug(gi.value);
+      HONORS[g.slug] = HONORS[g.slug] || [];
+      HONORS[g.slug].unshift({y:"2026", t:ti.value.trim(), tier:tr.value, r:ri.value.trim(), n:"由站务颁发"});
+      toast(`已向「${g.name}」颁发荣誉：${ti.value.trim()}`); break;
+    }
+    case "toast": toast(t.dataset.msg || "已完成"); break;
+    default: break;
+  }
+});
+
+document.addEventListener("change", (e) => {
+  const s = e.target.closest("[data-sel]");
+  if (!s) return;
+  const k = s.dataset.sel;
+  if (k === "rankServer") { state.rankServer = s.value; $("#rank-host").innerHTML = rankTable(filteredGuilds(), false); }
+  if (k === "rankSeason") { state.rankSeason = s.value; state.season = s.value; render(); }
+});
+
+document.addEventListener("input", (e) => {
+  const i = e.target.closest("[data-q]");
+  if (!i) return;
+  if (i.dataset.q === "rank") {
+    state.rankQ = i.value;
+    $("#rank-host").innerHTML = rankTable(filteredGuilds(), false);
+  }
+  if (i.dataset.q === "global") {
+    state.searchQ = i.value;
+    const box = $("#sres");
+    if (box) box.innerHTML = searchResults();
+  }
+});
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") { closeModal(); closeMail(); if (state.menu) { state.menu = false; renderHeader(); } }
+  if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") { e.preventDefault(); searchModal(); }
+});
+
+window.addEventListener("hashchange", () => { state.menu = false; render(); });
+
+/* boot */
+(async function boot(){
+  try {
+    const r = await fetch("/api/bootstrap", { cache: "no-store" });
+    if (r.ok) {
+      SERVER_MODE = true;
+      applyServer(await r.json(), false);
+    }
+  } catch (e) { /* 没有服务端，走本地演示模式 */ }
+
+  if (!SERVER_MODE) {
+    try {
+      const qp = new URLSearchParams(location.search);
+      if (qp.get("reset") === "1") localStorage.removeItem("fangbei_guild_v2");
+    } catch (e) {}
+    loadDB();
+    try {
+      const qp = new URLSearchParams(location.search);
+      const role = qp.get("role");
+      if (role === "admin") state.session = {name:"阿岚", role:"admin"};
+      if (role === "guest") state.session = null;
+    } catch (e) {}
+  }
+  render();
+})();
+})();
+</script>
+</body>
+</html>
