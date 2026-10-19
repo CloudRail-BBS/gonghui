@@ -1,7 +1,7 @@
 services:
   fangbei:
     build: .
-    image: fangbei-guildhall:1.2.0
+    image: fangbei-guildhall:1.3.0
     container_name: fangbei
     restart: unless-stopped
     init: true
@@ -12,9 +12,10 @@ services:
     environment:
       PORT: ${PORT:-3000}
       HOST: 0.0.0.0
-      ADMIN_USER: ${ADMIN_USER:-admin}
-      ADMIN_PASS: ${ADMIN_PASS:-admin123}
       DATA_DIR: /app/data
+      # 仅用于「忘记密码」：ADMIN_RESET_PASS=1 时改用 ADMIN_PASS 覆盖站长密码
+      ADMIN_PASS: ${ADMIN_PASS:-}
+      ADMIN_RESET_PASS: ${ADMIN_RESET_PASS:-0}
     volumes:
       - ./data:/app/data
     logging:

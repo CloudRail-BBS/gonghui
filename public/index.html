@@ -635,7 +635,7 @@ const state = {
   route:"/", session:{name:"林深", role:"owner"}, menu:false,
   rankSort:"points", rankServer:"all", rankSeason:"S3", rankQ:"",
   guildTab:"overview", adminTab:"review", season:"S3",
-  applied:false, bp:null, searchQ:"", myReports:[],
+  applied:false, bp:null, searchQ:"", myReports:[], firstRun:false,
   signups:{}, removed:[], openMail:null
 };
 
@@ -656,6 +656,7 @@ async function api(url, opt){
 
 function hydrate(s){
   if (!s) return;
+  if (typeof s.firstRun === "boolean") state.firstRun = s.firstRun;
   if (s.guilds) { GUILDS.length = 0; s.guilds.forEach(g => GUILDS.push(g)); }
   if (s.reviews) REVIEWS = s.reviews;
   if (s.reports) REPORTS = s.reports;
@@ -1031,6 +1032,9 @@ function HomeView(){
   <section class="hero">
     <div class="hero-in">
       <div>
+        ${state.firstRun && !state.session ? `<a href="#" data-act="register-open" style="display:inline-flex;align-items:center;gap:8px;margin-bottom:16px;padding:7px 12px;border-radius:8px;background:var(--accent-soft);border:1px solid rgba(45,212,191,.3);font-size:12px;color:var(--tx2)">
+          本站还没有账号 —— 注册第一个账号即可成为站长 <span style="color:var(--ac4);font-weight:600">去注册 →</span>
+        </a>` : ""}
         <div class="kicker"><span class="dot-live"></span> ${SITE.heroKicker}</div>
         <h1>${SITE.heroTitleA}<em> · </em>${SITE.heroTitleB}</h1>
         <p class="lead">${SITE.heroLead}</p>
@@ -2093,7 +2097,7 @@ function openModal(html){
 }
 
 function loginModal(){
-  if (SERVER_MODE) return authModal("login");
+  if (SERVER_MODE) return authModal(state.firstRun ? "register" : "login");
   openModal(`<div class="modal" data-stop="1">
     <div class="modal-h"><b>选择身份进入</b><button class="x" data-act="close-modal">✕</button></div>
     <div class="modal-b">
@@ -2188,6 +2192,9 @@ function authModal(mode){
   openModal(`<div class="modal" data-stop="1" style="max-width:430px">
     <div class="modal-h"><b>${m === "login" ? "登录 " + esc(SITE.brand) : "注册账号"}</b><button class="x" data-act="close-modal">✕</button></div>
     <div class="modal-b">
+      ${m === "register" && state.firstRun ? `<div style="margin-bottom:12px;padding:10px 12px;border-radius:9px;background:var(--accent-soft);border:1px solid rgba(45,212,191,.3);font-size:12px;line-height:1.65;color:var(--tx2)">
+        <b style="color:var(--ac4)">这是本站第一个账号</b>，注册后你会自动成为站长，拥有建会审核、赛事编排、站点设置等全部权限。
+      </div>` : ""}
       <div class="segs" style="margin-bottom:14px;width:100%">
         <button class="${m === "login" ? "on" : ""}" data-act="auth-mode" data-v="login" style="flex:1">登录</button>
         ${SITE.allowRegister === false ? "" : `<button class="${m === "register" ? "on" : ""}" data-act="auth-mode" data-v="register" style="flex:1">注册</button>`}
@@ -2658,6 +2665,7 @@ document.addEventListener("click", (e) => {
         .catch(e => { toast(e.message); t.disabled = false; });
       break;
     }
+    case "register-open": { e.preventDefault ? e.preventDefault() : 0; authModal("register"); break; }
     case "pass-open": {
       if (!SERVER_MODE) { toast("演示模式没有账号密码"); break; }
       if (!state.session) { toast("请先登录"); break; }

@@ -49,18 +49,18 @@
 
 ```bash
 npm install
-ADMIN_PASS=你的管理员密码 npm start
+npm start
 ```
 
-打开 http://localhost:3000 。
+打开 http://localhost:3000 ，**点「注册」建第一个账号，它就是站长**。
 
-- 首次启动会用 `ADMIN_USER` / `ADMIN_PASS` 创建管理员（默认 `admin` / `admin123`，**上线前务必改掉**）。
-- 数据库文件在 `data/db.json`，删除即可重置为示例数据。
+- 没有预置管理员，也没有默认密码。
+- 数据库文件在 `data/db.json`，删除即可重置为示例数据（账号也会一起清掉，重新注册即可）。
 
 ## Docker 部署
 
 ```bash
-cp .env.example .env      # 修改 ADMIN_PASS
+cp .env.example .env      # 需要改端口就改 PORT
 docker compose up -d --build
 ```
 
@@ -89,7 +89,6 @@ docker build -t fangbei .
 # 容器内端口用 -e PORT 指定，映射两侧保持一致
 docker run -d --name fangbei -p 8080:8080 \
   -e PORT=8080 \
-  -e ADMIN_PASS=your-password \
   -v $(pwd)/data:/app/data \
   fangbei
 ```
@@ -122,18 +121,21 @@ docker compose exec fangbei node -e "fetch('http://127.0.0.1:'+(process.env.PORT
 | `PORT` | `3000` | 监听端口；用 compose 时**同时决定宿主机映射端口** |
 | `HOST` | `0.0.0.0` | 监听地址，容器部署不要改成 `127.0.0.1` |
 | `DATA_DIR` | `./data` | 数据目录 |
-| `ADMIN_USER` | `admin` | 首次启动创建的管理员用户名 |
-| `ADMIN_PASS` | `admin123` | 首次启动创建的管理员密码 |
+| `ADMIN_PASS` | — | 仅配合 `ADMIN_RESET_PASS=1` 用，用于重置站长密码 |
+| `ADMIN_RESET_PASS` | `0` | 设为 `1` 时，启动即用 `ADMIN_PASS` 覆盖站长密码 |
 
 ### 管理员账号与密码
 
+系统**不预置任何账号**。第一次打开站点时，首页会提示「本站还没有账号」，点注册建的那个账号自动成为站长。
+
 | 场景 | 做法 |
 |---|---|
-| 第一次启动 | `ADMIN_USER` / `ADMIN_PASS` 生效，账号写进 `data/db.json` |
-| 已经有数据库 | `ADMIN_PASS` **不再生效**，沿用库里的密码（启动日志会写明） |
+| 第一次部署 | 打开首页 → 注册，第一个账号即站长 |
+| 已有账号 | 后续注册的都是普通玩家，需要站长在后台给权限（当前版本没有角色管理，除站长外均为普通用户） |
 | 登录后改密码 | 右上角头像 → 修改密码（或「我的」页 → 修改密码） |
-| 忘记密码 | `.env` 里加 `ADMIN_RESET_PASS=1`，重启一次；密码变成 `ADMIN_PASS`，重置完把这行删掉 |
-| 彻底重来 | 停服务，删掉 `data/db.json`，再启动会重新生成账号和示例数据 |
+| 忘记密码 | `.env` 里加 `ADMIN_RESET_PASS=1` 和 `ADMIN_PASS=新密码`，重启一次；重置完把这行删掉 |
+| 站长账号丢了 | 同上；若库里一个账号都没有，`ADMIN_RESET_PASS` 会提示先去注册 |
+| 彻底重来 | 停服务，删掉 `data/db.json`，再启动会回到「没有账号」状态，重新注册即站长 |
 
 ```bash
 # 忘记密码的例子

@@ -138,6 +138,7 @@ function publicState(user) {
     if (myGuild && list.includes(myGuild.slug)) signups[tid] = myGuild.name;
   });
   return {
+    firstRun: db.users.length === 0,
     meta: Object.assign({}, db.meta, { site: sitePublic(db.meta.site, isAdmin) }),
     guilds: db.guilds,
     matches: db.matches,
@@ -210,7 +211,9 @@ app.post('/api/register', async (req, res) => {
   if (tooMany(ip)) return res.status(429).json({ error: '尝试过于频繁，请稍后再试' });
   const db = store.get();
   const site = db.meta.site || store.defaultSite();
-  if (site.allowRegister === false) {
+  const firstRun = db.users.length === 0;
+  // 一个人都没有时，即使关掉了注册也要放行，否则永远没人能当站长
+  if (site.allowRegister === false && !firstRun) {
     return res.status(403).json({ error: '站点暂未开放注册' });
   }
 
@@ -239,9 +242,9 @@ app.post('/api/register', async (req, res) => {
     if (!c.ok) return res.status(400).json({ error: c.error });
   }
 
-  const user = store.makeUser({ username, password, name, mc, email });
+  const user = store.makeUser({ username, password, name, mc, email, admin: firstRun });
   db.users.push(user);
-  log(db, name, '注册账号', username);
+  log(db, name, firstRun ? '注册站长账号' : '注册账号', username);
   store.save();
   setSession(res, user);
   res.json({ me: meOf(user), state: publicState(user) });
@@ -734,12 +737,14 @@ app.post('/api/op', (req, res) => {
 
       case 'resetData': {
         if (!isAdmin) throw new Error('需要管理员权限');
-        const uname = user.username;
+        // 重置只清内容，必须保住当前站长，否则没人能再进后台
+        const keep = Object.assign({}, user, { admin: true });
         store.reset();
         const freshDb = store.get();
-        const fresh = freshDb.users.find(u => u.username === uname) || freshDb.users[0];
-        setSession(res, fresh);
-        return res.json({ me: meOf(fresh), state: publicState(fresh), reset: true });
+        freshDb.users = [keep];
+        freshDb.sessions = {};
+        setSession(res, keep);
+        return res.json({ me: meOf(keep), state: publicState(keep), reset: true });
       }
 
       default:
@@ -766,12 +771,13 @@ store.load();
   const flag = String(process.env.ADMIN_RESET_PASS || '').toLowerCase();
   if (flag !== '1' && flag !== 'true') return;
   const db = store.get();
-  const adm = db.users.find(u => u.admin);
+  const adm = db.users.find(u => u.admin) || db.users[0];
   const pass = String(process.env.ADMIN_PASS || '');
   if (!adm) {
-    console.error('[admin] 数据库里没有管理员账号，无法重置密码');
+    console.error('[admin] 数据库里还没有任何账号，先打开首页注册（第一个注册的账号自动成为站长）');
     return;
   }
+  if (!adm.admin) adm.admin = true;
   if (pass.length < 6) {
     console.error('[admin] ADMIN_RESET_PASS 已开启，但 ADMIN_PASS 为空或少于 6 位，已跳过');
     return;
@@ -795,12 +801,15 @@ const server = app.listen(PORT, HOST, () => {
   console.log(`  监听地址：${ip}:${PORT}${ip === '0.0.0.0' ? '（所有网卡）' : ''}`);
   console.log(`  本机访问：http://localhost:${PORT}`);
   console.log(`  数据目录：${store.DATA_DIR}`);
-  const info = store.getSeedInfo();
-  if (info.createdAdmin) {
-    console.log(`  管理员：${info.adminUser} / ${process.env.ADMIN_PASS || 'admin123'}（本次新建，请登录后到右上角头像里改密码）`);
+  const u = store.get().users;
+  const adm = u.find(x => x.admin);
+  if (!u.length) {
+    console.log('  账号：还没有 —— 打开首页点「注册」，第一个注册的账号自动成为站长');
+  } else if (adm) {
+    console.log(`  站长：${adm.username}（共 ${u.length} 个账号；改密码在右上角头像里）`);
+    console.log('  忘记密码：ADMIN_PASS=新密码 ADMIN_RESET_PASS=1 重启一次');
   } else {
-    console.log(`  管理员：${info.adminUser}（沿用 data/db.json 中的账号）`);
-    console.log(`  ⚠ 已有数据库时 ADMIN_PASS 不会覆盖旧密码；忘记密码请加 ADMIN_RESET_PASS=1 重启`);
+    console.log(`  注意：已有 ${u.length} 个账号但没有站长，用 ADMIN_RESET_PASS=1 可把第一个账号提为站长`);
   }
   console.log('');
 });
