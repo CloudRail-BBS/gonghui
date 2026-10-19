@@ -66,22 +66,61 @@ docker compose up -d --build
 
 默认映射 `3000` 端口，数据挂载在 `./data`。
 
+### 换端口（3000 被占用时）
+
+**改 `.env` 里的 `PORT`，两侧同时生效** —— 宿主机映射端口和容器内监听端口都由它决定：
+
+```bash
+# .env
+PORT=8080
+```
+
+```bash
+docker compose up -d          # 重新创建容器，端口映射随之更新
+docker compose ps             # 应显示 0.0.0.0:8080->8080/tcp
+```
+
+原理：compose 里写的是 `"${PORT:-3000}:${PORT:-3000}"`，同时把 `PORT` 传进容器作为环境变量。这样不会出现「宿主机映射了 8080、容器还在监听 3000」的错位。
+
 也可以不用 compose：
 
 ```bash
 docker build -t fangbei .
-docker run -d --name fangbei -p 3000:3000 \
+# 容器内端口用 -e PORT 指定，映射两侧保持一致
+docker run -d --name fangbei -p 8080:8080 \
+  -e PORT=8080 \
   -e ADMIN_PASS=your-password \
   -v $(pwd)/data:/app/data \
   fangbei
 ```
 
+> 如果只改 `-p 8080:3000` 而不传 `-e PORT`，容器仍监听 3000，映射同样有效；
+> 但把两侧都写成 8080 却忘了 `-e PORT=8080`，就会连不上。所以最省心的做法是两边都跟着 `PORT` 走。
+
+### 端口映射不通怎么查
+
+```bash
+docker compose ps                 # STATUS 应为 Up (healthy)；端口列显示 0.0.0.0:8080->8080/tcp
+docker compose logs --tail=50     # 应看到「监听地址：0.0.0.0:8080（所有网卡）」
+docker compose exec fangbei node -e "fetch('http://127.0.0.1:'+(process.env.PORT||3000)+'/api/health').then(r=>r.text()).then(console.log)"
+```
+
+对照排查：
+
+| 现象 | 原因 | 处理 |
+|---|---|---|
+| `docker compose up` 报 `port is already allocated` | 宿主机该端口被占用 | 换 `PORT`，或 `lsof -i:8080` / `netstat -ano \| findstr :8080` 找出占用进程 |
+| `docker compose ps` 里容器 `Restarting` | 进程启动失败（多半是依赖或数据目录） | `docker compose logs` 看具体报错 |
+| 日志显示 `监听地址：127.0.0.1:...` | `HOST` 被设成了回环地址 | 删掉自定义的 `HOST`，或设成 `0.0.0.0` |
+| 容器 `Up` 但浏览器连不上 | 云服务器安全组 / 防火墙没放行 | 放行对应端口的入站规则 |
+| 平台托管（Railway、Zeabur 等）访问 502 | 平台注入 `$PORT`，应用没跟随 | 本项目已读 `process.env.PORT`，不要额外写死端口 |
+
 ## 环境变量
 
 | 变量 | 默认值 | 说明 |
 |---|---|---|
-| `PORT` | `3000` | 监听端口 |
-| `HOST` | `0.0.0.0` | 监听地址 |
+| `PORT` | `3000` | 监听端口；用 compose 时**同时决定宿主机映射端口** |
+| `HOST` | `0.0.0.0` | 监听地址，容器部署不要改成 `127.0.0.1` |
 | `DATA_DIR` | `./data` | 数据目录 |
 | `ADMIN_USER` | `admin` | 首次启动创建的管理员用户名 |
 | `ADMIN_PASS` | `admin123` | 首次启动创建的管理员密码 |

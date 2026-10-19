@@ -1,0 +1,22 @@
+# 构建上下文排除项：这些都不该进镜像
+node_modules
+npm-debug.log*
+yarn-error.log*
+
+# 运行期数据（里面有账号哈希和会话，绝不能打进镜像）
+data
+_testdata
+
+# 本地环境与版本库
+.git
+.gitignore
+.gitattributes
+.env
+.env.*
+
+# 文档与临时文件
+*.md
+*.log
+.DS_Store
+Thumbs.db
+_svgcheck.html

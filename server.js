@@ -30,7 +30,11 @@ app.use(express.static(path.join(__dirname, 'public'), {
 }));
 
 const UPLOAD_DIR = path.join(store.DATA_DIR, 'uploads');
-fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+try {
+  fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+} catch (e) {
+  console.error('[upload] 无法创建上传目录 ' + UPLOAD_DIR + '：' + e.message + '（Logo 上传将不可用，其余功能不受影响）');
+}
 app.use('/uploads', express.static(UPLOAD_DIR, { maxAge: '1d', fallthrough: true }));
 
 /* ---------------- 鉴权 ---------------- */
@@ -360,7 +364,12 @@ app.post('/api/upload', (req, res) => {
     }
   }
   const name = 'logo-' + crypto.randomBytes(8).toString('hex') + '.' + ext;
-  fs.writeFileSync(path.join(UPLOAD_DIR, name), buf);
+  try {
+    fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+    fs.writeFileSync(path.join(UPLOAD_DIR, name), buf);
+  } catch (e) {
+    return res.status(500).json({ error: '写入上传目录失败：' + e.message + '（检查 data 目录是否可写）' });
+  }
   res.json({ url: '/uploads/' + name, size: buf.length });
 });
 
@@ -731,9 +740,30 @@ app.get('*', (req, res) => {
 });
 
 store.load();
-app.listen(PORT, HOST, () => {
+
+if (HOST === 'localhost' || HOST === '127.0.0.1') {
+  console.warn('[警告] HOST=' + HOST + ' 只监听回环地址，容器外（含 -p 映射）访问不到。容器部署请用 HOST=0.0.0.0');
+}
+
+const server = app.listen(PORT, HOST, () => {
+  const addr = server.address();
+  const ip = addr && typeof addr === 'object' ? addr.address : HOST;
   console.log(`\n  方碑 · MC 公会中心`);
-  console.log(`  http://localhost:${PORT}`);
-  console.log(`  数据文件：${store.DB_FILE}`);
+  console.log(`  监听地址：${ip}:${PORT}${ip === '0.0.0.0' ? '（所有网卡）' : ''}`);
+  console.log(`  本机访问：http://localhost:${PORT}`);
+  console.log(`  数据目录：${store.DATA_DIR}`);
   console.log(`  默认管理员：${process.env.ADMIN_USER || 'admin'} / ${process.env.ADMIN_PASS || 'admin123'}（首次启动生成，请尽快修改密码）\n`);
+});
+
+server.on('error', (e) => {
+  if (e.code === 'EADDRINUSE') {
+    console.error(`\n[启动失败] 端口 ${PORT} 已被占用。`);
+    console.error(`  本机：换个端口，PORT=8080 npm start`);
+    console.error(`  容器：在 .env 里改 PORT=8080，再 docker compose up -d\n`);
+  } else if (e.code === 'EACCES') {
+    console.error(`\n[启动失败] 没有权限绑定端口 ${PORT}（1024 以下需要 root）。换个高位端口即可。\n`);
+  } else {
+    console.error('\n[启动失败]', e);
+  }
+  process.exit(1);
 });

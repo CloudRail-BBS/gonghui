@@ -1,13 +1,24 @@
 services:
   fangbei:
     build: .
+    image: fangbei-guildhall:1.1.1
     container_name: fangbei
     restart: unless-stopped
+    init: true
+    # 宿主机端口和容器端口都用 ${PORT}：
+    # 在 .env 里写 PORT=8080，就同时变成「容器监听 8080」和「宿主机 8080 → 容器 8080」
     ports:
-      - "3000:3000"
+      - "${PORT:-3000}:${PORT:-3000}"
     environment:
+      PORT: ${PORT:-3000}
+      HOST: 0.0.0.0
       ADMIN_USER: ${ADMIN_USER:-admin}
       ADMIN_PASS: ${ADMIN_PASS:-admin123}
       DATA_DIR: /app/data
     volumes:
       - ./data:/app/data
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
