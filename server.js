@@ -6,8 +6,11 @@
  */
 const express = require('express');
 const path = require('path');
+const fs = require('fs');
 const crypto = require('crypto');
 const store = require('./lib/store');
+const mailer = require('./lib/mailer');
+const geetest = require('./lib/geetest');
 
 const PORT = parseInt(process.env.PORT || '3000', 10);
 const HOST = process.env.HOST || '0.0.0.0';
@@ -16,7 +19,7 @@ const SESSION_DAYS = 30;
 
 const app = express();
 app.set('trust proxy', 1);
-app.use(express.json({ limit: '256kb' }));
+app.use(express.json({ limit: '4mb' }));
 app.use(express.static(path.join(__dirname, 'public'), {
   index: 'index.html',
   setHeaders(res, filePath) {
@@ -25,6 +28,10 @@ app.use(express.static(path.join(__dirname, 'public'), {
     else res.setHeader('Cache-Control', 'public, max-age=3600');
   }
 }));
+
+const UPLOAD_DIR = path.join(store.DATA_DIR, 'uploads');
+fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+app.use('/uploads', express.static(UPLOAD_DIR, { maxAge: '1d', fallthrough: true }));
 
 /* ---------------- 鉴权 ---------------- */
 function parseCookies(header) {
@@ -76,12 +83,43 @@ function tooMany(ip) {
 }
 
 /* ---------------- 序列化 ---------------- */
+/** 站点配置对外输出：密码/密钥永不下发，管理员只拿到「是否已设置」 */
+function sitePublic(site, isAdmin) {
+  const s = JSON.parse(JSON.stringify(site || store.defaultSite()));
+  const m = s.mail || {};
+  const g = s.geetest || {};
+  if (isAdmin) {
+    s.mail = {
+      enabled: !!m.enabled,
+      host: m.host || '',
+      port: m.port || 465,
+      secure: m.secure || 'ssl',
+      user: m.user || '',
+      fromName: m.fromName || '',
+      fromAddr: m.fromAddr || '',
+      requireVerify: !!m.requireVerify,
+      hasPass: !!m.pass
+    };
+    s.geetest = {
+      enabled: !!g.enabled,
+      captchaId: g.captchaId || '',
+      scenes: g.scenes || { login: true, register: true, reset: true },
+      hasKey: !!g.captchaKey
+    };
+  } else {
+    s.mail = { enabled: !!m.enabled, requireVerify: !!m.requireVerify };
+    s.geetest = { enabled: !!g.enabled, captchaId: g.captchaId || '', scenes: g.scenes || {} };
+  }
+  return s;
+}
+
 function meOf(user) {
   if (!user) return null;
   const db = store.get();
   const g = db.guilds.find(x => x.slug === user.guildSlug);
   return {
     id: user.id, username: user.username, name: user.name, mc: user.mc,
+    email: user.email || '',
     admin: !!user.admin, guildSlug: g ? g.slug : null, guildName: g ? g.name : null
   };
 }
@@ -96,7 +134,7 @@ function publicState(user) {
     if (myGuild && list.includes(myGuild.slug)) signups[tid] = myGuild.name;
   });
   return {
-    meta: db.meta,
+    meta: Object.assign({}, db.meta, { site: sitePublic(db.meta.site, isAdmin) }),
     guilds: db.guilds,
     matches: db.matches,
     honors: db.honors,
@@ -121,6 +159,16 @@ function mail(db, to, from, title, body) {
   });
   db.mails = db.mails.slice(0, 80);
 }
+/** 只允许站内路径 / http(s) / data:image，避免 javascript: 之类的伪协议 */
+function safeImgUrl(u) {
+  const v = String(u || '').trim();
+  if (!v) return '';
+  if (/^\/(?!\/)/.test(v)) return v;
+  if (/^https?:\/\//i.test(v)) return v;
+  if (/^data:image\/(png|jpeg|jpg|gif|webp|svg\+xml);base64,/i.test(v)) return v;
+  return '';
+}
+
 function log(db, who, act, tg) {
   db.logs.unshift({ t: new Date().toISOString().slice(11, 16), who, act, tg });
   db.logs = db.logs.slice(0, 100);
@@ -129,23 +177,65 @@ function today() {
   return new Date().toISOString().slice(0, 10);
 }
 
+/* ---------------- 邮箱验证码 ---------------- */
+const codes = new Map();      // `${scene}:${email}` -> {code, exp, tries}
+const lastSend = new Map();   // email -> ts
+const CODE_TTL = 10 * 60e3;
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
+function issueCode(email, scene) {
+  const code = String(crypto.randomInt(100000, 1000000));
+  codes.set(scene + ':' + email, { code, exp: Date.now() + CODE_TTL, tries: 0 });
+  return code;
+}
+function checkCode(email, scene, code) {
+  const rec = codes.get(scene + ':' + email);
+  if (!rec) return { ok: false, error: '请先获取邮箱验证码' };
+  if (Date.now() > rec.exp) { codes.delete(scene + ':' + email); return { ok: false, error: '验证码已过期，请重新获取' }; }
+  if (rec.tries >= 6) return { ok: false, error: '尝试次数过多，请重新获取验证码' };
+  rec.tries += 1;
+  if (String(code || '').trim() !== rec.code) return { ok: false, error: '验证码不正确' };
+  codes.delete(scene + ':' + email);
+  return { ok: true };
+}
+function consumeCode(email, scene) { codes.delete(scene + ':' + email); }
+
 /* ---------------- 认证接口 ---------------- */
-app.post('/api/register', (req, res) => {
+app.post('/api/register', async (req, res) => {
   const ip = req.ip || '';
   if (tooMany(ip)) return res.status(429).json({ error: '尝试过于频繁，请稍后再试' });
   const db = store.get();
-  if ((db.meta.site || {}).allowRegister === false) {
+  const site = db.meta.site || store.defaultSite();
+  if (site.allowRegister === false) {
     return res.status(403).json({ error: '站点暂未开放注册' });
   }
+
+  if (geetest.sceneOn(site.geetest, 'register')) {
+    const g = await geetest.verify(site.geetest, req.body.captcha);
+    if (!g.ok) return res.status(400).json({ error: g.reason || '人机验证未通过' });
+    if (g.degraded) console.warn('[geetest] register', g.reason);
+  }
+
   const username = store.clean(req.body.username, 24).toLowerCase();
   const password = String(req.body.password || '');
   const name = store.clean(req.body.name, 16) || username;
   const mc = store.clean(req.body.mc, 16);
+  const email = store.clean(req.body.email, 64).toLowerCase();
   if (!/^[a-z0-9_]{3,24}$/.test(username)) return res.status(400).json({ error: '用户名需为 3–24 位字母、数字或下划线' });
   if (password.length < 6) return res.status(400).json({ error: '密码至少 6 位' });
+  if (email && !EMAIL_RE.test(email)) return res.status(400).json({ error: '邮箱格式不正确' });
   if (db.users.some(u => u.username === username)) return res.status(409).json({ error: '用户名已被占用' });
+  if (email && db.users.some(u => (u.email || '') === email)) return res.status(409).json({ error: '该邮箱已被注册' });
 
-  const user = store.makeUser({ username, password, name, mc });
+  const needMail = !!(site.mail && site.mail.requireVerify);
+  if (needMail) {
+    if (!email) return res.status(400).json({ error: '本站注册需要邮箱验证' });
+    if (!mailer.ready(site.mail)) return res.status(400).json({ error: '站点尚未配置邮件服务，暂时无法完成邮箱验证' });
+    const c = checkCode(email, 'register', req.body.code);
+    if (!c.ok) return res.status(400).json({ error: c.error });
+  }
+
+  const user = store.makeUser({ username, password, name, mc, email });
   db.users.push(user);
   log(db, name, '注册账号', username);
   store.save();
@@ -153,10 +243,18 @@ app.post('/api/register', (req, res) => {
   res.json({ me: meOf(user), state: publicState(user) });
 });
 
-app.post('/api/login', (req, res) => {
+app.post('/api/login', async (req, res) => {
   const ip = req.ip || '';
   if (tooMany(ip)) return res.status(429).json({ error: '尝试过于频繁，请稍后再试' });
   const db = store.get();
+  const site = db.meta.site || store.defaultSite();
+
+  if (geetest.sceneOn(site.geetest, 'login')) {
+    const g = await geetest.verify(site.geetest, req.body.captcha);
+    if (!g.ok) return res.status(400).json({ error: g.reason || '人机验证未通过' });
+    if (g.degraded) console.warn('[geetest] login', g.reason);
+  }
+
   const username = store.clean(req.body.username, 24).toLowerCase();
   const user = db.users.find(u => u.username === username);
   if (!user || !store.verifyPassword(String(req.body.password || ''), user)) {
@@ -164,6 +262,106 @@ app.post('/api/login', (req, res) => {
   }
   setSession(res, user);
   res.json({ me: meOf(user), state: publicState(user) });
+});
+
+/* ---------------- 发信 / 找回密码 ---------------- */
+app.post('/api/mail/code', async (req, res) => {
+  const site = store.get().meta.site || store.defaultSite();
+  const ip = req.ip || '';
+  if (tooMany(ip)) return res.status(429).json({ error: '尝试过于频繁，请稍后再试' });
+
+  const scene = req.body.scene === 'reset' ? 'reset' : 'register';
+  const email = store.clean(req.body.email, 64).toLowerCase();
+  if (!EMAIL_RE.test(email)) return res.status(400).json({ error: '邮箱格式不正确' });
+  if (!mailer.ready(site.mail)) return res.status(400).json({ error: '站点尚未配置邮件服务' });
+
+  const now = Date.now();
+  const last = lastSend.get(email) || 0;
+  if (now - last < 60e3) return res.status(429).json({ error: '发送过于频繁，请 ' + Math.ceil((60e3 - (now - last)) / 1000) + ' 秒后再试' });
+
+  if (scene === 'reset') {
+    const u = store.get().users.find(x => (x.email || '') === email);
+    if (!u) return res.status(404).json({ error: '该邮箱没有绑定账号' });
+  }
+
+  const code = issueCode(email, scene);
+  const purpose = scene === 'reset' ? '重置方碑账号密码' : '注册方碑账号';
+  const out = await mailer.send(site.mail, {
+    to: email,
+    subject: `【${site.brand || '方碑'}】验证码 ${code}`,
+    text: mailer.codeMail(site.brand || '方碑', code, CODE_TTL / 60e3, purpose)
+  });
+  if (!out.ok) return res.status(502).json({ error: '邮件发送失败：' + out.error });
+
+  lastSend.set(email, now);
+  res.json({ ok: true, ttl: CODE_TTL / 1000 });
+});
+
+app.post('/api/mail/test', async (req, res) => {
+  const user = currentUser(req);
+  if (!user || !user.admin) return res.status(403).json({ error: '需要管理员权限' });
+  const site = store.get().meta.site || store.defaultSite();
+  const to = store.clean(req.body.to, 64).toLowerCase();
+  if (!EMAIL_RE.test(to)) return res.status(400).json({ error: '收件邮箱格式不正确' });
+  const out = await mailer.send(site.mail, {
+    to,
+    subject: `【${site.brand || '方碑'}】SMTP 测试邮件`,
+    text: [
+      '这是一封测试邮件。',
+      '',
+      '如果你收到了它，说明后台的 SMTP 配置可以正常发信。',
+      '',
+      '—— ' + (site.brand || '方碑')
+    ].join('\n')
+  });
+  if (!out.ok) return res.status(502).json({ error: out.error });
+  res.json({ ok: true });
+});
+
+app.post('/api/password/reset', async (req, res) => {
+  const db = store.get();
+  const site = db.meta.site || store.defaultSite();
+
+  if (geetest.sceneOn(site.geetest, 'reset')) {
+    const g = await geetest.verify(site.geetest, req.body.captcha);
+    if (!g.ok) return res.status(400).json({ error: g.reason || '人机验证未通过' });
+  }
+
+  const email = store.clean(req.body.email, 64).toLowerCase();
+  const password = String(req.body.password || '');
+  if (password.length < 6) return res.status(400).json({ error: '新密码至少 6 位' });
+  const user = db.users.find(u => (u.email || '') === email);
+  if (!user) return res.status(404).json({ error: '该邮箱没有绑定账号' });
+  const c = checkCode(email, 'reset', req.body.code);
+  if (!c.ok) return res.status(400).json({ error: c.error });
+
+  store.setPassword(user, password);
+  // 该账号的其他会话全部失效
+  Object.keys(db.sessions).forEach(t => { if (db.sessions[t].userId === user.id) delete db.sessions[t]; });
+  log(db, user.name, '重置密码', email);
+  store.save();
+  res.json({ ok: true });
+});
+
+/* ---------------- 图片上传（管理员） ---------------- */
+app.post('/api/upload', (req, res) => {
+  const user = currentUser(req);
+  if (!user || !user.admin) return res.status(403).json({ error: '需要管理员权限' });
+  const dataUrl = String(req.body.dataUrl || '');
+  const m = /^data:image\/(png|jpeg|jpg|gif|webp|svg\+xml);base64,([A-Za-z0-9+/=]+)$/.exec(dataUrl);
+  if (!m) return res.status(400).json({ error: '只支持 PNG / JPG / WEBP / GIF / SVG' });
+  const buf = Buffer.from(m[2], 'base64');
+  if (buf.length > 1.5 * 1024 * 1024) return res.status(400).json({ error: '图片请小于 1.5 MB' });
+  const ext = m[1] === 'jpeg' ? 'jpg' : m[1] === 'svg+xml' ? 'svg' : m[1];
+  if (ext === 'svg') {
+    const txt = buf.toString('utf8');
+    if (/<script|onload=|onerror=|onclick=|javascript:/i.test(txt)) {
+      return res.status(400).json({ error: 'SVG 中含脚本内容，已拒绝' });
+    }
+  }
+  const name = 'logo-' + crypto.randomBytes(8).toString('hex') + '.' + ext;
+  fs.writeFileSync(path.join(UPLOAD_DIR, name), buf);
+  res.json({ url: '/uploads/' + name, size: buf.length });
 });
 
 app.post('/api/logout', (req, res) => {
@@ -430,11 +628,25 @@ app.post('/api/op', (req, res) => {
         break;
       }
 
+      case 'setEmail': {
+        const email = store.clean(p.email, 64).toLowerCase();
+        if (email && !EMAIL_RE.test(email)) throw new Error('邮箱格式不正确');
+        if (email && db.users.some(u => u.id !== user.id && (u.email || '') === email)) {
+          throw new Error('该邮箱已被其他账号使用');
+        }
+        user.email = email;
+        log(db, user.name, email ? '绑定邮箱' : '解绑邮箱', email || '—');
+        break;
+      }
+
       case 'saveSettings': {
         if (!isAdmin) throw new Error('需要管理员权限');
         const s = p.site || {};
         const cur = db.meta.site || store.defaultSite();
         const num = v => Math.max(0, Math.min(9999, parseInt(v, 10) || 0));
+        const logo = s.logo || {};
+        const mail = s.mail || {};
+        const gt = s.geetest || {};
         const stats = Array.isArray(s.stats)
           ? s.stats.slice(0, 4).map((x, i) => ({
               v: store.clean(x && x.v, 12) || (cur.stats[i] ? cur.stats[i].v : ''),
@@ -458,9 +670,36 @@ app.post('/api/op', (req, res) => {
           championSub: store.clean(s.championSub, 40),
           stats,
           allowRegister: s.allowRegister !== false,
-          allowCreateGuild: s.allowCreateGuild !== false
+          allowCreateGuild: s.allowCreateGuild !== false,
+          logo: {
+            mode: logo.mode === 'text' ? 'text' : 'image',
+            url: safeImgUrl(store.clean(logo.url, 300)) || (cur.logo && cur.logo.url) || '/assets/logo.svg',
+            height: Math.max(16, Math.min(48, parseInt(logo.height, 10) || 27)),
+            showText: logo.showText !== false
+          },
+          mail: {
+            enabled: !!mail.enabled,
+            host: store.clean(mail.host, 120),
+            port: Math.max(1, Math.min(65535, parseInt(mail.port, 10) || 465)),
+            secure: ['ssl', 'starttls', 'none'].indexOf(mail.secure) >= 0 ? mail.secure : 'ssl',
+            user: store.clean(mail.user, 120),
+            pass: mail.pass ? String(mail.pass).slice(0, 200) : ((cur.mail && cur.mail.pass) || ''),
+            fromName: store.clean(mail.fromName, 40),
+            fromAddr: store.clean(mail.fromAddr, 120),
+            requireVerify: !!mail.requireVerify
+          },
+          geetest: {
+            enabled: !!gt.enabled,
+            captchaId: store.clean(gt.captchaId, 64),
+            captchaKey: gt.captchaKey ? String(gt.captchaKey).slice(0, 128) : ((cur.geetest && cur.geetest.captchaKey) || ''),
+            scenes: {
+              login: !gt.scenes || gt.scenes.login !== false,
+              register: !gt.scenes || gt.scenes.register !== false,
+              reset: !gt.scenes || gt.scenes.reset !== false
+            }
+          }
         };
-        log(db, user.name, '更新站点设置', '首页内容');
+        log(db, user.name, '更新站点设置', '站点内容');
         break;
       }
 

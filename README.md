@@ -14,6 +14,7 @@
 
 **公开**
 - 明暗两套主题，跟随系统 / 手动切换（按浏览器记忆）
+- 后台可切换站点 Logo：上传图片 / 文字徽标、高度、是否显示站名
 - 移动端底部标签栏（≤760px 自动切换，含安全区适配），桌面端保留顶部导航
 - 首页：赛季信息、Top3 领奖台、最新战报、赛事入口
 - 公会榜：按积分 / 胜率 / 人数 / 等级排序，按服务器筛选、关键词搜索
@@ -23,6 +24,7 @@
 
 **登录后**
 - 创建公会（提交审核）、申请入会 / 直接加入
+- 邮箱绑定；忘记密码走「邮箱验证码 → 重置密码」
 - 提交战报 → 对方确认 → 计分；有异议转争议
 - 赛事报名
 - 站内信：未读、展开、全部已读
@@ -34,6 +36,9 @@
 - 赛事编排：录入半决赛比分，胜者自动进入决赛
 - 争议仲裁：举报成立扣分 / 驳回
 - 站点设置：首页文案、赛季起止与剩余天数、赛制/计分说明、冠军卡、数据条四项、开放注册与创建公会开关
+- 品牌与 Logo：上传图片 / 文字徽标、显示高度、是否显示站名
+- 邮件服务（SMTP）：主机、端口、加密方式、账号、授权码、发件人、注册是否需邮箱验证、一键发送测试邮件
+- 人机验证（极验 4.0）：Captcha ID / Key、生效场景（登录 / 注册 / 找回密码）
 - 审计日志：注册、建会、确认战报、报名、仲裁等动作留痕
 
 ---
@@ -90,13 +95,17 @@ fangbei-server/
 ├── server.js           # 路由、鉴权、业务操作
 ├── lib/
 │   ├── store.js        # JSON 存储、密码哈希、种子数据
-│   └── seed.js         # 示例公会 / 赛事 / 对阵
+│   ├── seed.js         # 示例公会 / 赛事 / 对阵
+│   ├── mailer.js       # SMTP 发信（nodemailer 封装）
+│   └── geetest.js      # 极验 4.0 服务端二次校验
 ├── public/
 │   ├── index.html      # 前端（单文件）
 │   └── assets/
 │       ├── logo.svg    # 站点标识（原图）
 │       └── favicon.svg # 浏览器页签图标
-├── data/db.json        # 运行时生成
+├── data/
+│   ├── db.json         # 运行时生成
+│   └── uploads/        # 后台上传的 Logo
 ├── Dockerfile
 ├── docker-compose.yml
 └── .env.example
@@ -112,6 +121,38 @@ fangbei-server/
 - 冠军卡指向哪个公会、标签与副标
 - 首页四个数据条的数值与标签
 - 是否开放注册、是否开放创建公会
+
+### 品牌与 Logo
+
+- **显示方式**：图片 Logo / 文字徽标（站点名首字，自动配色）
+- **图片地址**：可填站内路径、外链，或直接点「上传」存到 `data/uploads/`（PNG / JPG / WEBP / GIF / SVG，≤1.5 MB）
+- **高度**：16–48 px；**站点名文字**可单独隐藏
+- 浏览器页签图标（favicon）会跟着 Logo 一起变
+
+### 邮件服务（SMTP）
+
+填好主机、端口、加密方式、账号与授权码后，先点「发送测试邮件」确认能发出去。常见配置：
+
+| 邮箱 | 主机 | 端口 | 加密 |
+|---|---|---|---|
+| QQ 邮箱 | smtp.qq.com | 465 | SSL（密码填授权码） |
+| 163 邮箱 | smtp.163.com | 465 | SSL（密码填授权码） |
+| Gmail | smtp.gmail.com | 465 | SSL（应用专用密码） |
+| 自建 Postfix | 你的域名 | 587 | STARTTLS |
+
+开启「注册需邮箱验证」后，注册必须填邮箱并输入 6 位验证码；验证码 10 分钟内有效，同邮箱 60 秒内只能发一次。
+「忘记密码」只在邮件服务启用后显示，走的是同一套 SMTP。
+
+密码与授权码**只存在服务器**（`meta.site.mail.pass`），接口从不下发明文；后台里显示为「已保存，留空表示不修改」。
+
+### 人机验证（极验 4.0）
+
+1. 到 [geetest.com](https://www.geetest.com/) 申请「行为验证 4.0」，拿到 Captcha ID 与 Key；
+2. 后台填入，勾选生效场景（登录 / 注册 / 找回密码）；
+3. 前端自动加载 `gt4.js`，提交时弹验证，通过后把 `lot_number / captcha_output / pass_token / gen_time` 交给服务端；
+4. 服务端用 Key 做 HMAC-SHA256 签名，请求 `gcaptcha4.geetest.com/validate` 二次校验。
+
+未填 ID 与 Key 时整段自动跳过。若极验接口本身不可达（网络故障），服务端会放行并在日志里记一条 `degraded`，避免验证服务抖动导致全站无法登录。
 
 保存后立即生效，存于 `data/db.json` 的 `meta.site`。重置数据会一并恢复默认文案。
 
@@ -166,16 +207,20 @@ docker compose up -d --build
 
 | 方法 | 路径 | 说明 |
 |---|---|---|
-| POST | `/api/register` | 注册（username / password / name / mc） |
-| POST | `/api/login` | 登录 |
+| POST | `/api/register` | 注册（username / password / name / mc / email / code / captcha） |
+| POST | `/api/login` | 登录（可带 captcha） |
 | POST | `/api/logout` | 退出 |
-| GET | `/api/bootstrap` | 当前用户 + 全站状态 |
+| GET | `/api/bootstrap` | 当前用户 + 全站状态（站点配置已脱敏） |
 | GET | `/api/health` | 健康检查 |
 | POST | `/api/op` | 业务操作（见下） |
+| POST | `/api/mail/code` | 发送 6 位邮箱验证码（scene: register / reset） |
+| POST | `/api/mail/test` | 管理员发送 SMTP 测试邮件 |
+| POST | `/api/password/reset` | 邮箱验证码重置密码 |
+| POST | `/api/upload` | 管理员上传 Logo 图片（base64） |
 
 `/api/op` 的 `type`：`createGuild` `reviewGuild` `joinGuild` `editGuild` `kickMember`
 `reportMatch` `confirmMatch` `disputeMatch` `signup` `saveScore` `awardHonor`
-`readMail` `resolveReport` `saveSettings` `resetData`。
+`readMail` `resolveReport` `setEmail` `saveSettings` `resetData`。
 
 所有操作都在服务端校验权限：会长只能改自己的公会，确认战报必须是另一方，管理操作需要 `admin`。
 

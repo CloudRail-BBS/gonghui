@@ -69,9 +69,10 @@ button{font-family:inherit}
 .hdr{position:sticky;top:0;z-index:60;background:var(--hdr-bg);backdrop-filter:blur(16px);border-bottom:1px solid var(--soft)}
 .hdr-in{max-width:var(--max);margin:0 auto;padding:0 24px;height:58px;display:flex;align-items:center;gap:20px}
 .brand{display:flex;align-items:center;gap:10px;flex:0 0 auto}
-.brand .mark{width:27px;height:27px;flex:0 0 auto;display:block;filter:drop-shadow(0 4px 12px rgba(118,150,213,.34))}
+.brand .mark{flex:0 0 auto;display:flex;align-items:center;justify-content:center}
+.brand .mark img.mark-img{display:block;width:auto;max-width:132px;object-fit:contain;border-radius:6px}
+.brand .mark .mark-txt{display:grid;place-items:center;border-radius:7px;line-height:1;font-weight:800;letter-spacing:-.02em;color:#04211E;background:linear-gradient(145deg,var(--ac4),var(--ac6));box-shadow:0 4px 14px -6px rgba(45,212,191,.8)}
 .brand .mark svg{display:block;width:27px;height:27px}
-.brand:hover .mark{filter:drop-shadow(0 4px 16px rgba(118,150,213,.55))}
 .brand-t{display:flex;flex-direction:column;line-height:1.1}
 .brand-t b{font-size:14.5px;letter-spacing:.06em}
 .brand-t small{font:500 8.5px var(--mono);color:var(--mut);letter-spacing:.22em;margin-top:2px}
@@ -513,7 +514,10 @@ const SITE = {
     { v: "2,431", label: "注册玩家" },
     { v: "96", label: "已颁荣誉" }
   ],
-  allowRegister: true, allowCreateGuild: true
+  allowRegister: true, allowCreateGuild: true,
+  logo: { mode: "image", url: "/assets/logo.svg", height: 27, showText: true },
+  mail: { enabled: false, requireVerify: false },
+  geetest: { enabled: false, captchaId: "", scenes: { login: true, register: true, reset: true } }
 };
 
 const SEASON = {id:"S3", name:"第 3 赛季 · 群系争锋", start:"2026-09-01", end:"2026-11-30", days:42};
@@ -619,7 +623,7 @@ const LOGS = [
   {t:"10-16", who:"系统", act:"不活跃衰减", tg:"12 个公会"}
 ];
 
-const ME = {name:"林深", mc:"LinShen", uuid:"8f2c4d1e…a41d", role:"会长", guild:"shuangxu", contrib:128400, joined:"2025-11-02", matches:128, winrate:71.4};
+const ME = {name:"林深", mc:"LinShen", email:"", uuid:"8f2c4d1e…a41d", role:"会长", guild:"shuangxu", contrib:128400, joined:"2025-11-02", matches:128, winrate:71.4};
 
 let MAILS = [
   {from:"方碑 · 站务", title:"第 3 赛季规则更新说明", time:"1 小时前", unread:true, body:"本赛季起，战报需在比赛结束后 24 小时内提交，超时需由管理员手动补录。弃权一律记 0:2。"},
@@ -679,7 +683,7 @@ function applyServer(d, doRender){
     const confirmed = MATCHES.filter(m => m.status === "confirmed" && (m.aSlug === me.guildSlug || m.bSlug === me.guildSlug));
     const wins = confirmed.filter(m => (m.aSlug === me.guildSlug ? m.sa > m.sb : m.sb > m.sa)).length;
     Object.assign(ME, {
-      name: me.name, mc: me.mc || "—", guild: me.guildSlug,
+      name: me.name, mc: me.mc || "—", email: me.email || "", guild: me.guildSlug,
       contrib: entry ? entry.contrib : 0,
       joined: entry ? entry.joined : (g ? g.founded : "—"),
       matches: confirmed.length,
@@ -690,6 +694,7 @@ function applyServer(d, doRender){
     state.session = null;
     CONFIRMS = [];
   }
+  applyBrandIcon();
   if (doRender !== false) render();
 }
 
@@ -782,6 +787,91 @@ const hexA = (hex, a) => {
 };
 const fmt = n => n.toLocaleString("en-US");
 const firstChar = s => { const a = Array.from(String(s || "").trim()); return a[0] || "?"; };
+
+/* 品牌标识：后台「品牌与 Logo」决定用图片还是文字徽标 */
+function brandMark(){
+  const L = Object.assign({ mode: "image", url: "/assets/logo.svg", height: 27 }, SITE.logo || {});
+  const h = Math.max(16, Math.min(48, parseInt(L.height, 10) || 27));
+  if (L.mode === "image" && L.url) {
+    return `<img class="mark-img" src="${esc(L.url)}" alt="" style="height:${h}px">`;
+  }
+  return `<span class="mark-txt" style="width:${h}px;height:${h}px;font-size:${Math.round(h * 0.46)}px">${esc(firstChar(SITE.brand))}</span>`;
+}
+/* 收集「站点设置」全部字段（内容 / Logo / 邮件 / 极验） */
+function collectSettings(){
+  const v = id => { const el = $("#" + id); return el ? el.value : ""; };
+  const c = id => { const el = $("#" + id); return el ? !!el.checked : true; };
+  return {
+    brand: v("st-brand").trim(),
+    brandSub: v("st-brandsub").trim(),
+    heroKicker: v("st-kicker").trim(),
+    heroTitleA: v("st-titlea").trim(),
+    heroTitleB: v("st-titleb").trim(),
+    heroLead: v("st-lead").trim(),
+    seasonStart: v("st-start").trim(),
+    seasonEnd: v("st-end").trim(),
+    seasonDays: +v("st-days") || 0,
+    format: v("st-format").trim(),
+    scoring: v("st-scoring").trim(),
+    championSlug: v("st-champ"),
+    championLabel: v("st-champlabel").trim(),
+    championSub: v("st-champsub").trim(),
+    stats: [0, 1, 2, 3].map(i => ({ v: v("st-s" + i + "v").trim(), label: v("st-s" + i + "l").trim() })),
+    allowRegister: v("st-reg") === "1",
+    allowCreateGuild: v("st-create") === "1",
+    logo: {
+      mode: v("lg-mode") || "image",
+      url: v("lg-url").trim(),
+      height: +v("lg-height") || 27,
+      showText: v("lg-text") !== "0"
+    },
+    mail: {
+      enabled: v("ml-enabled") === "1",
+      requireVerify: v("ml-verify") === "1",
+      host: v("ml-host").trim(),
+      port: +v("ml-port") || 465,
+      secure: v("ml-secure") || "ssl",
+      user: v("ml-user").trim(),
+      pass: v("ml-pass"),
+      fromName: v("ml-fromname").trim(),
+      fromAddr: v("ml-fromaddr").trim()
+    },
+    geetest: {
+      enabled: v("gt-enabled") === "1",
+      captchaId: v("gt-id").trim(),
+      captchaKey: v("gt-key"),
+      scenes: { login: c("gt-s-login"), register: c("gt-s-register"), reset: c("gt-s-reset") }
+    }
+  };
+}
+
+async function uploadLogo(file){
+  if (!file) return;
+  if (!SERVER_MODE) { toast("上传需要服务端，演示模式请直接填图片地址"); return; }
+  if (file.size > 1.5 * 1024 * 1024) { toast("图片请小于 1.5 MB"); return; }
+  const dataUrl = await new Promise(res => {
+    const fr = new FileReader();
+    fr.onload = () => res(fr.result);
+    fr.onerror = () => res("");
+    fr.readAsDataURL(file);
+  });
+  if (!dataUrl) { toast("读取文件失败"); return; }
+  try {
+    const d = await api("/api/upload", { method: "POST", body: JSON.stringify({ dataUrl }) });
+    const inp = $("#lg-url"); if (inp) inp.value = d.url;
+    const prev = $("#lg-prev"); if (prev) prev.src = d.url;
+    toast("已上传，记得点「保存设置」");
+  } catch (e) { toast("上传失败：" + e.message); }
+}
+
+function applyBrandIcon(){
+  const L = SITE.logo || {};
+  const href = (L.mode !== "text" && L.url) ? L.url : "/assets/favicon.svg";
+  let link = document.querySelector('link[rel="icon"]');
+  if (!link) { link = document.createElement("link"); link.rel = "icon"; document.head.appendChild(link); }
+  link.type = /\.png$/i.test(href) ? "image/png" : /\.jpe?g$/i.test(href) ? "image/jpeg" : "image/svg+xml";
+  link.href = href;
+}
 const bySlug = s => GUILDS.find(g => g.slug === s);
 const sorted = () => GUILDS.slice().sort((a,b) => b.points - a.points);
 const rankOf = slug => sorted().findIndex(g => g.slug === slug) + 1;
@@ -873,8 +963,8 @@ function renderHeader(){
   const items = navItems();
   $("#hdr").innerHTML = `
     <a class="brand" href="#/">
-      <span class="mark" aria-hidden="true">${LOGO}</span>
-      <span class="brand-t"><b>${SITE.brand}</b><small>${SITE.brandSub}</small></span>
+      <span class="mark" aria-hidden="true">${brandMark()}</span>
+      ${SITE.logo && SITE.logo.showText === false ? "" : `<span class="brand-t"><b>${SITE.brand}</b><small>${SITE.brandSub}</small></span>`}
     </a>
     <nav class="nav">
       ${items.map(i => `<a href="${i.href}" class="${i.on ? "on" : ""}">${i.label}</a>`).join("")}
@@ -1616,12 +1706,14 @@ function MeView(){
           <h3>账号信息</h3>
           <div class="kv" style="margin-top:8px">
             <dt>MC ID</dt><dd class="mono">${ME.mc}</dd>
+            <dt>邮箱</dt><dd>${ME.email ? `<span class="mono">${esc(ME.email)}</span>` : `<span class="mut">未绑定</span>`}</dd>
             <dt>平台 ID</dt><dd class="mono">#SH-0142</dd>
             <dt>注册时间</dt><dd class="mono">2025-11-02</dd>
           </div>
-          <p class="hint" style="margin-top:12px;line-height:1.6">平台不连接任何游戏服务器。MC ID 由玩家自行填写，仅用于对手核对身份。</p>
-          <div style="display:flex;gap:8px;margin-top:12px">
+          <p class="hint" style="margin-top:12px;line-height:1.6">平台不连接任何游戏服务器。MC ID 由玩家自行填写，仅用于对手核对身份。绑定邮箱后可以用它找回密码。</p>
+          <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
             <button class="btn g sm" data-act="toast" data-msg="资料已保存">编辑资料</button>
+            <button class="btn g sm" data-act="email-open">${ME.email ? "更换邮箱" : "绑定邮箱"}</button>
             <button class="btn g sm" data-act="toast" data-msg="修改后请告知对手，避免核对失败">修改 MC ID</button>
           </div>
         </div>
@@ -1852,6 +1944,123 @@ function AdminView(){
                 <span class="hint">保存后首页立即刷新</span>
               </div>
             </div>
+          </div>
+
+          <div class="card box" style="margin-top:14px">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">
+              <div>
+                <h3 style="margin-bottom:4px">品牌与 Logo</h3>
+                <p class="hint">控制顶栏标识：用图片，还是用站点名首字生成的文字徽标。</p>
+              </div>
+              <span class="pill ${SITE.logo && SITE.logo.mode === "image" ? "t" : ""}" id="lg-mode-tag">${SITE.logo && SITE.logo.mode === "text" ? "文字徽标" : "图片 Logo"}</span>
+            </div>
+            <div class="form" style="margin-top:14px;max-width:700px">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                <div class="field"><label>显示方式</label>
+                  <select id="lg-mode">
+                    <option value="image" ${!SITE.logo || SITE.logo.mode !== "text" ? "selected" : ""}>图片 Logo</option>
+                    <option value="text" ${SITE.logo && SITE.logo.mode === "text" ? "selected" : ""}>文字徽标（站点名首字）</option>
+                  </select></div>
+                <div class="field"><label>Logo 高度（16–48 px）</label>
+                  <input id="lg-height" type="number" min="16" max="48" value="${(SITE.logo && SITE.logo.height) || 27}"></div>
+              </div>
+              <div class="field"><label>Logo 图片地址</label>
+                <div style="display:flex;gap:8px;align-items:center">
+                  <img id="lg-prev" src="${esc(SITE.logo && SITE.logo.url ? SITE.logo.url : "/assets/logo.svg")}" alt="" style="width:34px;height:34px;border-radius:8px;object-fit:contain;background:var(--s800);border:1px solid var(--line);flex:0 0 auto">
+                  <input id="lg-url" maxlength="300" value="${esc(SITE.logo && SITE.logo.url ? SITE.logo.url : "/assets/logo.svg")}" placeholder="/assets/logo.svg 或 https://…">
+                  <label class="btn g sm" for="lg-file" style="flex:0 0 auto;margin:0;cursor:pointer">上传</label>
+                  <input type="file" id="lg-file" accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml" style="display:none">
+                </div>
+                <div class="hint" style="margin-top:6px">支持 PNG / JPG / WEBP / GIF / SVG，≤1.5 MB。上传后自动填入地址。</div>
+              </div>
+              <div class="field"><label>是否显示站点名文字</label>
+                <select id="lg-text">
+                  <option value="1" ${!SITE.logo || SITE.logo.showText !== false ? "selected" : ""}>显示（Logo + 站名）</option>
+                  <option value="0" ${SITE.logo && SITE.logo.showText === false ? "selected" : ""}>隐藏（只留 Logo）</option>
+                </select></div>
+            </div>
+          </div>
+
+          <div class="card box" style="margin-top:14px">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">
+              <div>
+                <h3 style="margin-bottom:4px">邮件服务（SMTP）</h3>
+                <p class="hint">用于注册邮箱验证、找回密码。密码只存在服务器，不会下发给任何访客。</p>
+              </div>
+              <span class="pill ${SITE.mail && SITE.mail.enabled ? "t" : ""}">${SITE.mail && SITE.mail.enabled ? "已启用" : "未启用"}</span>
+            </div>
+            <div class="form" style="margin-top:14px;max-width:700px">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                <div class="field"><label>启用发信</label>
+                  <select id="ml-enabled">
+                    <option value="1" ${SITE.mail && SITE.mail.enabled ? "selected" : ""}>启用</option>
+                    <option value="0" ${SITE.mail && SITE.mail.enabled ? "" : "selected"}>停用</option>
+                  </select></div>
+                <div class="field"><label>注册需邮箱验证</label>
+                  <select id="ml-verify">
+                    <option value="1" ${SITE.mail && SITE.mail.requireVerify ? "selected" : ""}>需要验证码</option>
+                    <option value="0" ${SITE.mail && SITE.mail.requireVerify ? "" : "selected"}>不需要</option>
+                  </select></div>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 120px 140px;gap:12px">
+                <div class="field"><label>SMTP 主机</label><input id="ml-host" maxlength="120" value="${esc(SITE.mail && SITE.mail.host ? SITE.mail.host : "")}" placeholder="smtp.example.com"></div>
+                <div class="field"><label>端口</label><input id="ml-port" type="number" min="1" max="65535" value="${(SITE.mail && SITE.mail.port) || 465}"></div>
+                <div class="field"><label>加密</label>
+                  <select id="ml-secure">
+                    <option value="ssl" ${!SITE.mail || SITE.mail.secure === "ssl" ? "selected" : ""}>SSL（465）</option>
+                    <option value="starttls" ${SITE.mail && SITE.mail.secure === "starttls" ? "selected" : ""}>STARTTLS（587）</option>
+                    <option value="none" ${SITE.mail && SITE.mail.secure === "none" ? "selected" : ""}>不加密</option>
+                  </select></div>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                <div class="field"><label>SMTP 账号</label><input id="ml-user" maxlength="120" value="${esc(SITE.mail && SITE.mail.user ? SITE.mail.user : "")}" placeholder="通常就是发件邮箱"></div>
+                <div class="field"><label>SMTP 密码 / 授权码</label><input id="ml-pass" type="password" maxlength="200" value="" placeholder="${SITE.mail && SITE.mail.hasPass ? "已保存，留空表示不修改" : "未设置"}"></div>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                <div class="field"><label>发件人名称</label><input id="ml-fromname" maxlength="40" value="${esc(SITE.mail && SITE.mail.fromName ? SITE.mail.fromName : "")}" placeholder="方碑公会中心"></div>
+                <div class="field"><label>发件人邮箱</label><input id="ml-fromaddr" maxlength="120" value="${esc(SITE.mail && SITE.mail.fromAddr ? SITE.mail.fromAddr : "")}" placeholder="no-reply@example.com"></div>
+              </div>
+              <div class="field"><label>发送测试邮件</label>
+                <div style="display:flex;gap:8px">
+                  <input id="ml-test-to" maxlength="120" placeholder="收件邮箱，例如 you@example.com">
+                  <button class="btn g" data-act="mail-test" style="flex:0 0 auto">发送测试</button>
+                </div>
+                <div class="hint" style="margin-top:6px">先保存配置，再点发送测试；失败会返回具体的 SMTP 报错。</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card box" style="margin-top:14px">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">
+              <div>
+                <h3 style="margin-bottom:4px">人机验证（极验 4.0）</h3>
+                <p class="hint">在 <span class="mono">geetest.com</span> 申请「行为验证 4.0」后，把 Captcha ID 与 Key 填在这里。</p>
+              </div>
+              <span class="pill ${SITE.geetest && SITE.geetest.enabled ? "t" : ""}">${SITE.geetest && SITE.geetest.enabled ? "已启用" : "未启用"}</span>
+            </div>
+            <div class="form" style="margin-top:14px;max-width:700px">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                <div class="field"><label>启用</label>
+                  <select id="gt-enabled">
+                    <option value="1" ${SITE.geetest && SITE.geetest.enabled ? "selected" : ""}>启用</option>
+                    <option value="0" ${SITE.geetest && SITE.geetest.enabled ? "" : "selected"}>停用</option>
+                  </select></div>
+                <div class="field"><label>生效场景</label>
+                  <div style="display:flex;gap:12px;align-items:center;height:34px;font-size:12px;color:var(--tx2)">
+                    <label style="display:flex;gap:5px;align-items:center;margin:0"><input type="checkbox" id="gt-s-login" ${!SITE.geetest || !SITE.geetest.scenes || SITE.geetest.scenes.login !== false ? "checked" : ""}>登录</label>
+                    <label style="display:flex;gap:5px;align-items:center;margin:0"><input type="checkbox" id="gt-s-register" ${!SITE.geetest || !SITE.geetest.scenes || SITE.geetest.scenes.register !== false ? "checked" : ""}>注册</label>
+                    <label style="display:flex;gap:5px;align-items:center;margin:0"><input type="checkbox" id="gt-s-reset" ${!SITE.geetest || !SITE.geetest.scenes || SITE.geetest.scenes.reset !== false ? "checked" : ""}>找回密码</label>
+                  </div></div>
+              </div>
+              <div class="field"><label>Captcha ID</label><input id="gt-id" maxlength="64" value="${esc(SITE.geetest && SITE.geetest.captchaId ? SITE.geetest.captchaId : "")}" placeholder="例如 54088bb07d2df3c46b79f80396"></div>
+              <div class="field"><label>Captcha Key</label><input id="gt-key" type="password" maxlength="128" value="" placeholder="${SITE.geetest && SITE.geetest.hasKey ? "已保存，留空表示不修改" : "填写极验后台的 Key"}">
+                <div class="hint" style="margin-top:6px">Key 仅用于服务端二次校验，任何情况下都不会出现在网页源码里。</div>
+              </div>
+              <div style="display:flex;gap:8px;align-items:center">
+                <button class="btn p" data-act="save-settings">保存设置</button>
+                <span class="hint">未填 ID 与 Key 时，人机验证会自动跳过。</span>
+              </div>
+            </div>
           </div>` : ""}
 
         ${tab === "log" ? `
@@ -1907,11 +2116,75 @@ function loginModal(){
 }
 
 /* 真实登录 / 注册 */
+/* ============ 人机验证（极验 4.0） ============ */
+const GT = { scene: null, result: null, obj: null, loading: null };
+
+function gtCfg(){ return SITE.geetest || {}; }
+function gtOn(scene){
+  const g = gtCfg();
+  if (!g.enabled || !g.captchaId) return false;
+  const sc = g.scenes || {};
+  return sc[scene] !== false;
+}
+function loadGt4(){
+  if (window.initGeetest4) return Promise.resolve();
+  if (GT.loading) return GT.loading;
+  GT.loading = new Promise((res, rej) => {
+    const el = document.createElement("script");
+    el.src = "https://static.geetest.com/v4/gt4.js";
+    el.async = true;
+    el.onload = () => res();
+    el.onerror = () => rej(new Error("脚本加载失败"));
+    document.head.appendChild(el);
+    setTimeout(() => { if (!window.initGeetest4) rej(new Error("加载超时")); }, 8000);
+  });
+  return GT.loading;
+}
+function gtHint(){
+  const h = $("#gt-hint");
+  if (!h) return;
+  if (!gtOn(GT.scene)) { h.textContent = ""; h.style.display = "none"; return; }
+  h.style.display = "block";
+  h.textContent = GT.result ? "✓ 人机验证已通过" : (GT.obj ? "提交时弹出验证，完成后再点一次提交" : "正在加载验证组件…");
+}
+async function mountGt(scene){
+  GT.scene = scene; GT.result = null; GT.obj = null;
+  gtHint();
+  if (!gtOn(scene)) return;
+  try {
+    await loadGt4();
+    if (GT.scene !== scene) return;
+    initGeetest4({ captchaId: gtCfg().captchaId, product: "bind", language: "zho" }, cap => {
+      GT.obj = cap;
+      cap.onSuccess(() => { GT.result = cap.getValidate(); gtHint(); });
+      cap.onError(() => { GT.result = null; gtHint(); });
+      cap.onClose(() => { gtHint(); });
+      gtHint();
+    });
+  } catch (e) {
+    const h = $("#gt-hint");
+    if (h) { h.style.display = "block"; h.textContent = "验证组件加载失败：" + e.message + "（可联系站长关闭人机验证）"; }
+  }
+}
+function gtBlock(scene){
+  if (!gtOn(scene)) return false;
+  if (GT.result) return false;
+  if (GT.obj) {
+    try { GT.obj.showBox ? GT.obj.showBox() : GT.obj.showCaptcha(); } catch (e) {}
+    toast("请先完成人机验证");
+  } else {
+    toast("验证组件还在加载，请稍候");
+  }
+  return true;
+}
+
 function authModal(mode){
   if (mode === "register" && SITE.allowRegister === false) mode = "login";
   const m = mode === "register" ? "register" : "login";
-  openModal(`<div class="modal" data-stop="1" style="max-width:410px">
-    <div class="modal-h"><b>${m === "login" ? "登录方碑" : "注册账号"}</b><button class="x" data-act="close-modal">✕</button></div>
+  const needMail = !!(SITE.mail && SITE.mail.requireVerify);
+  const withCode = m === "register" && needMail;
+  openModal(`<div class="modal" data-stop="1" style="max-width:430px">
+    <div class="modal-h"><b>${m === "login" ? "登录 " + esc(SITE.brand) : "注册账号"}</b><button class="x" data-act="close-modal">✕</button></div>
     <div class="modal-b">
       <div class="segs" style="margin-bottom:14px;width:100%">
         <button class="${m === "login" ? "on" : ""}" data-act="auth-mode" data-v="login" style="flex:1">登录</button>
@@ -1924,19 +2197,74 @@ function authModal(mode){
         <div class="field"><label>游戏内名称</label>
           <input id="au-name" maxlength="16" placeholder="显示在成员列表里"></div>
         <div class="field"><label>MC ID（选填）</label>
-          <input id="au-mc" maxlength="16" placeholder="用于对手核对"></div>` : ""}
+          <input id="au-mc" maxlength="16" placeholder="用于对手核对"></div>
+        <div class="field"><label>邮箱${needMail ? "" : "（选填）"}</label>
+          <div style="display:flex;gap:8px">
+            <input id="au-email" type="email" maxlength="64" autocomplete="email" placeholder="${needMail ? "用于接收验证码、找回密码" : "用于找回密码，可稍后绑定"}">
+            ${withCode ? `<button class="btn g sm" data-act="send-code" data-scene="register" style="flex:0 0 auto">获取验证码</button>` : ""}
+          </div></div>
+        ${withCode ? `
+        <div class="field"><label>邮箱验证码</label>
+          <input id="au-code" maxlength="6" inputmode="numeric" placeholder="6 位数字"></div>` : ""}` : ""}
         <div class="field"><label>密码</label>
           <input id="au-pass" type="password" autocomplete="${m === "login" ? "current-password" : "new-password"}" placeholder="至少 6 位"></div>
       </div>
-      <p class="hint" style="margin:12px 0 0;line-height:1.7">${m === "login"
-        ? "没有账号？切到「注册」，几秒钟就好。"
-        : "注册后即可创建公会、提交战报；第一个管理员账号由服务器环境变量生成。"}</p>
+      <div id="gt-hint" class="hint" style="margin-top:10px;line-height:1.6"></div>
+      <p class="hint" style="margin:10px 0 0;line-height:1.7">${m === "login"
+        ? `没有账号？切到「注册」，几秒钟就好。${SITE.mail && SITE.mail.enabled ? ' <a href="#" data-act="reset-open" style="color:var(--ac4)">忘记密码？</a>' : ""}`
+        : `注册后即可创建公会、提交战报。${needMail ? "本站需要邮箱验证，验证码 10 分钟内有效。" : ""}`}</p>
     </div>
     <div class="modal-f">
       <button class="btn p" data-act="auth-submit" data-v="${m}">${m === "login" ? "登录" : "注册并登录"}</button>
     </div>
   </div>`);
+  mountGt(m);
   setTimeout(() => { const i = $("#au-user"); if (i) i.focus(); }, 40);
+}
+
+function emailModal(){
+  openModal(`<div class="modal" data-stop="1" style="max-width:420px">
+    <div class="modal-h"><b>${ME.email ? "更换邮箱" : "绑定邮箱"}</b><button class="x" data-act="close-modal">✕</button></div>
+    <div class="modal-b">
+      <p class="hint" style="margin:0 0 12px;line-height:1.7">绑定后可用它找回密码；邮箱不会公开展示。</p>
+      <div class="form">
+        <div class="field"><label>邮箱地址</label>
+          <input id="em-val" type="email" maxlength="64" value="${esc(ME.email || "")}" placeholder="you@example.com"></div>
+      </div>
+    </div>
+    <div class="modal-f">
+      <button class="btn p" data-act="email-save">保存</button>
+      ${ME.email ? `<button class="btn g" data-act="email-clear">解绑</button>` : ""}
+    </div>
+  </div>`);
+  setTimeout(() => { const i = $("#em-val"); if (i) i.focus(); }, 40);
+}
+
+function resetModal(){
+  closeModal();
+  openModal(`<div class="modal" data-stop="1" style="max-width:430px">
+    <div class="modal-h"><b>找回密码</b><button class="x" data-act="close-modal">✕</button></div>
+    <div class="modal-b">
+      <p class="hint" style="margin:0 0 12px;line-height:1.7">填写注册时绑定的邮箱，我们会把 6 位验证码发到你的邮箱。</p>
+      <div class="form">
+        <div class="field"><label>邮箱</label>
+          <div style="display:flex;gap:8px">
+            <input id="rs-email" type="email" maxlength="64" placeholder="you@example.com">
+            <button class="btn g sm" data-act="send-code" data-scene="reset" style="flex:0 0 auto">获取验证码</button>
+          </div></div>
+        <div class="field"><label>验证码</label>
+          <input id="rs-code" maxlength="6" inputmode="numeric" placeholder="6 位数字"></div>
+        <div class="field"><label>新密码</label>
+          <input id="rs-pass" type="password" autocomplete="new-password" placeholder="至少 6 位"></div>
+      </div>
+      <div id="gt-hint" class="hint" style="margin-top:10px;line-height:1.6"></div>
+    </div>
+    <div class="modal-f">
+      <button class="btn p" data-act="reset-submit">重置密码</button>
+      <button class="btn g" data-act="close-modal">取消</button>
+    </div>
+  </div>`);
+  mountGt("reset");
 }
 
 function applyModal(slug){
@@ -2281,21 +2609,77 @@ document.addEventListener("click", (e) => {
   switch (act) {
     case "go": state.menu = false; location.hash = t.dataset.href; break;
     case "login-open": state.menu = false; renderHeader(); loginModal(); break;
-    case "auth-mode": { authModal(t.dataset.v); break; }
+    case "auth-mode": { GT.result = null; GT.obj = null; authModal(t.dataset.v); break; }
     case "auth-submit": {
       const mode = t.dataset.v;
       const username = ($("#au-user").value || "").trim();
       const password = $("#au-pass").value || "";
       if (!username || !password) { toast("请填写用户名和密码"); break; }
-      const body = { username, password };
+      if (SERVER_MODE && gtBlock(mode)) break;
+      const body = { username, password, captcha: GT.result };
       if (mode === "register") {
+        const em = $("#au-email"), cd = $("#au-code");
         body.name = ($("#au-name").value || "").trim() || username;
         body.mc = ($("#au-mc").value || "").trim();
+        body.email = em ? em.value.trim() : "";
+        body.code = cd ? cd.value.trim() : "";
+        if (SITE.mail && SITE.mail.requireVerify) {
+          if (!body.email) { toast("请填写邮箱"); break; }
+          if (!body.code) { toast("请填写邮箱验证码"); break; }
+        }
       }
       t.disabled = true;
       api(mode === "register" ? "/api/register" : "/api/login", { method: "POST", body: JSON.stringify(body) })
         .then(d => { applyServer(d); closeModal(); toast(mode === "register" ? "注册成功，欢迎加入" : "欢迎回来"); })
         .catch(e => { toast(e.message); t.disabled = false; });
+      break;
+    }
+    case "email-open": { if (!SERVER_MODE) { toast("演示模式无需绑定邮箱"); break; } emailModal(); break; }
+    case "email-save": {
+      const email = ($("#em-val").value || "").trim();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) { toast("邮箱格式不正确"); break; }
+      op("setEmail", { email }).then(ok => { if (ok) { closeModal(); toast("邮箱已更新"); } });
+      break;
+    }
+    case "email-clear": {
+      op("setEmail", { email: "" }).then(ok => { if (ok) { closeModal(); toast("已解绑邮箱"); } });
+      break;
+    }
+    case "reset-open": { resetModal(); break; }
+    case "send-code": {
+      const scene = t.dataset.scene === "reset" ? "reset" : "register";
+      const em = scene === "reset" ? $("#rs-email") : $("#au-email");
+      const email = em ? em.value.trim() : "";
+      if (!email) { toast("请先填写邮箱"); break; }
+      if (!SERVER_MODE) { toast("演示模式没有服务端，无法发信"); break; }
+      const old = t.textContent;
+      t.disabled = true; t.textContent = "发送中…";
+      api("/api/mail/code", { method: "POST", body: JSON.stringify({ email, scene }) })
+        .then(() => {
+          toast("验证码已发送，10 分钟内有效");
+          let n = 60;
+          t.textContent = n + "s";
+          const iv = setInterval(() => {
+            n -= 1;
+            t.textContent = n + "s";
+            if (n <= 0) { clearInterval(iv); t.disabled = false; t.textContent = old; }
+          }, 1000);
+        })
+        .catch(e => { toast(e.message); t.disabled = false; t.textContent = old; });
+      break;
+    }
+    case "reset-submit": {
+      const email = ($("#rs-email").value || "").trim();
+      const code = ($("#rs-code").value || "").trim();
+      const pass = $("#rs-pass").value || "";
+      if (!email || !code) { toast("请填写邮箱和验证码"); break; }
+      if (pass.length < 6) { toast("新密码至少 6 位"); break; }
+      if (gtBlock("reset")) break;
+      const btn = t;
+      btn.disabled = true;
+      api("/api/password/reset", { method: "POST", body: JSON.stringify({ email, code, password: pass, captcha: GT.result }) })
+        .then(() => { closeModal(); toast("密码已重置，请用新密码登录"); authModal("login"); })
+        .catch(e => { toast(e.message); btn.disabled = false; });
       break;
     }
     case "login-as": {
@@ -2484,31 +2868,27 @@ document.addEventListener("click", (e) => {
       break;
     }
     case "save-settings": {
-      const site = {
-        brand: $("#st-brand").value.trim(),
-        brandSub: $("#st-brandsub").value.trim(),
-        heroKicker: $("#st-kicker").value.trim(),
-        heroTitleA: $("#st-titlea").value.trim(),
-        heroTitleB: $("#st-titleb").value.trim(),
-        heroLead: $("#st-lead").value.trim(),
-        seasonStart: $("#st-start").value.trim(),
-        seasonEnd: $("#st-end").value.trim(),
-        seasonDays: +$("#st-days").value || 0,
-        format: $("#st-format").value.trim(),
-        scoring: $("#st-scoring").value.trim(),
-        championSlug: $("#st-champ").value,
-        championLabel: $("#st-champlabel").value.trim(),
-        championSub: $("#st-champsub").value.trim(),
-        stats: [0, 1, 2, 3].map(i => ({ v: $("#st-s" + i + "v").value.trim(), label: $("#st-s" + i + "l").value.trim() })),
-        allowRegister: $("#st-reg").value === "1",
-        allowCreateGuild: $("#st-create").value === "1"
-      };
+      const site = collectSettings();
       if (SERVER_MODE) {
-        op("saveSettings", { site }).then(ok => { if (ok) toast("站点设置已保存"); });
+        op("saveSettings", { site }).then(ok => { if (ok) { applyBrandIcon(); toast("站点设置已保存"); } });
       } else {
         Object.assign(SITE, site);
-        saveDB(); render(); toast("站点设置已保存");
+        saveDB(); applyBrandIcon(); render(); toast("站点设置已保存");
       }
+      break;
+    }
+    case "mail-test": {
+      const to = ($("#ml-test-to") ? $("#ml-test-to").value : "").trim();
+      if (!to) { toast("请填写收件邮箱"); break; }
+      if (!SERVER_MODE) { toast("演示模式没有服务端，无法发信"); break; }
+      toast("正在发送测试邮件…");
+      api("/api/mail/test", { method: "POST", body: JSON.stringify({ to }) })
+        .then(() => toast("测试邮件已发出，请查收"))
+        .catch(e => toast("发送失败：" + e.message));
+      break;
+    }
+    case "logo-pick": {
+      const f = $("#lg-file"); if (f) f.click();
       break;
     }
     case "reset-db": {
@@ -2619,6 +2999,7 @@ document.addEventListener("click", (e) => {
 });
 
 document.addEventListener("change", (e) => {
+  if (e.target && e.target.id === "lg-file") { uploadLogo(e.target.files && e.target.files[0]); return; }
   const s = e.target.closest("[data-sel]");
   if (!s) return;
   const k = s.dataset.sel;
@@ -2627,6 +3008,10 @@ document.addEventListener("change", (e) => {
 });
 
 document.addEventListener("input", (e) => {
+  if (e.target && e.target.id === "lg-url") {
+    const prev = $("#lg-prev");
+    if (prev) prev.src = e.target.value.trim() || "/assets/logo.svg";
+  }
   const i = e.target.closest("[data-q]");
   if (!i) return;
   if (i.dataset.q === "rank") {
@@ -2670,6 +3055,7 @@ window.addEventListener("hashchange", () => { state.menu = false; render(); });
       if (role === "guest") state.session = null;
     } catch (e) {}
   }
+  applyBrandIcon();
   render();
 })();
 })();
